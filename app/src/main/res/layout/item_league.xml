@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/CardPrimary"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <!-- Icono de la liga DINÁMICO -->
+        <ImageView
+            android:id="@+id/iv_league_icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_created_league"
+            android:background="@drawable/circle_background_green_light"
+            android:padding="12dp"
+            android:layout_marginEnd="16dp"
+            android:layout_gravity="center_vertical" />
+
+        <!-- Información de la liga -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Nombre de la liga -->
+            <TextView
+                android:id="@+id/tv_league_name"
+                style="@style/TextSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Liga Premium"
+                android:textColor="@color/accent_gold"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Descripción -->
+            <TextView
+                android:id="@+id/tv_league_description"
+                style="@style/TextBody"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="La liga de los campeones"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Participantes -->
+            <TextView
+                android:id="@+id/tv_participants"
+                style="@style/TextSecondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12 participantes"
+                android:textSize="12sp"
+                android:drawableStart="@drawable/ic_group_add"
+                android:drawablePadding="4dp"
+                android:drawableTint="@color/gray_medium"
+                android:gravity="center_vertical" />
+
+        </LinearLayout>
+
+        <!-- Estado y flecha -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_gravity="center_vertical">
+
+            <!-- Estado de la liga -->
+            <TextView
+                android:id="@+id/tv_status"
+                style="@style/TextSecondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Activa"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Flecha -->
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_arrow_forward"
+                android:tint="@color/gray_medium" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

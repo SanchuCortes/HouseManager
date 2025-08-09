@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_my_leagues"
+        android:icon="@drawable/ic_trophy"
+        android:title="Mis Ligas" />
+
+    <item
+        android:id="@+id/nav_classification"
+        android:icon="@drawable/ic_bar_chart"
+        android:title="Ranking" />
+
+    <item
+        android:id="@+id/nav_team"
+        android:icon="@drawable/ic_group_add"
+        android:title="Mi Equipo" />
+
+    <item
+        android:id="@+id/nav_market"
+        android:icon="@drawable/ic_euro"
+        android:title="Mercado" />
+
+    <item
+        android:id="@+id/nav_activity"
+        android:icon="@drawable/ic_info"
+        android:title="Info Liga" />
+
+</menu>

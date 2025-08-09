@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!-- Contenido principal -->
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- AppBar con Material Design -->
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:elevation="4dp">
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="@color/primary_blue"
+                app:navigationIcon="@drawable/ic_menu"
+                app:title=""
+                app:titleTextColor="@color/white"
+                app:logo="@null">
+
+                <!-- Logo HomeField centrado y más pequeño -->
+                <ImageView
+                    android:layout_width="300dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="0dp"
+                    android:layout_marginEnd="48dp"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/homefield_logo" />
+
+            </com.google.android.material.appbar.MaterialToolbar>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <!-- Contenido con scroll -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/background_field_enhanced"
+                android:padding="16dp">
+
+                <!-- Saludo con icono -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginTop="4dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_home"
+                        android:layout_marginEnd="16dp"
+                        android:background="@drawable/circle_background_green_light"
+                        android:padding="8dp"
+                        app:tint="@color/accent_gold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_welcome"
+                            style="@style/TextTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="¡Hola, Manager!"
+                            android:textColor="@color/accent_gold"
+                            android:layout_marginBottom="0dp" />
+
+                        <TextView
+                            style="@style/TextSecondary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Gestiona tu equipo desde casa" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Card de estadísticas rápidas -->
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/CardPrimary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- Header del card -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="16dp">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:src="@drawable/ic_bar_chart"
+                                android:layout_marginEnd="12dp"
+                                app:tint="@color/accent_gold" />
+
+                            <TextView
+                                style="@style/TextSubtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Tu Resumen"
+                                android:layout_marginBottom="0dp" />
+
+                        </LinearLayout>
+
+                        <!-- Fila de estadísticas -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:baselineAligned="false">
+
+                            <!-- Ligas activas -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:background="@drawable/rounded_background_light"
+                                android:padding="12dp">
+
+                                <TextView
+                                    android:id="@+id/tv_active_leagues"
+                                    style="@style/TextSubtitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="3"
+                                    android:textColor="@color/accent_gold"
+                                    android:textSize="24sp"
+                                    android:layout_marginBottom="4dp" />
+
+                                <TextView
+                                    style="@style/TextSecondary"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Ligas activas"
+                                    android:textSize="12sp" />
+
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="16dp"
+                                android:layout_height="1dp" />
+
+                            <!-- Alineaciones incompletas -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:background="@drawable/rounded_background_gold"
+                                android:padding="12dp">
+
+                                <TextView
+                                    android:id="@+id/tv_incomplete_lineups"
+                                    style="@style/TextSubtitle"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="1"
+                                    android:textColor="@color/accent_gold"
+                                    android:textSize="24sp"
+                                    android:textStyle="bold"
+                                    android:layout_marginBottom="4dp" />
+
+                                <TextView
+                                    style="@style/TextSecondary"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Alineación incompleta"
+                                    android:textSize="12sp" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Título de acciones -->
+                <TextView
+                    style="@style/TextSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="¿Qué quieres hacer?"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Botones principales mejorados -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Ver Ligas -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_view_leagues"
+                        style="@style/ButtonPrimary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Ver mis ligas"
+                        app:icon="@drawable/ic_trophy"
+                        app:iconTint="@color/white"
+                        app:iconGravity="textStart"
+                        app:iconPadding="12dp" />
+
+                    <!-- Crear Liga -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_create_league"
+                        style="@style/ButtonSecondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Crear nueva liga"
+                        app:icon="@drawable/ic_add"
+                        app:iconTint="@color/secondary_green"
+                        app:iconGravity="textStart"
+                        app:iconPadding="12dp" />
+
+                    <!-- Unirse a Liga -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_join_league"
+                        style="@style/ButtonSecondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Unirse a liga"
+                        app:icon="@drawable/ic_person_add"
+                        app:iconTint="@color/secondary_green"
+                        app:iconGravity="textStart"
+                        app:iconPadding="12dp" />
+
+                </LinearLayout>
+
+                <!-- Card de próximos partidos -->
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/CardList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- Header de próximos partidos -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="12dp">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@drawable/ic_list"
+                                android:layout_marginEnd="8dp"
+                                app:tint="@color/accent_gold" />
+
+                            <TextView
+                                style="@style/TextSubtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Próximos Partidos"
+                                android:textSize="16sp"
+                                android:layout_marginBottom="0dp" />
+
+                        </LinearLayout>
+
+                        <!-- Lista de partidos -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <!-- Partido 1 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="8dp">
+
+                                <TextView
+                                    style="@style/TextSecondary"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="HOY 21:00"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/secondary_green"
+                                    android:textSize="12sp"
+                                    android:layout_marginEnd="12dp"
+                                    android:minWidth="80dp" />
+
+                                <TextView
+                                    style="@style/TextBody"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Real Madrid vs Barcelona"
+                                    android:textSize="14sp" />
+
+                            </LinearLayout>
+
+                            <!-- Partido 2 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+
+                                <TextView
+                                    style="@style/TextSecondary"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="MAÑ 16:15"
+                                    android:textSize="12sp"
+                                    android:layout_marginEnd="12dp"
+                                    android:minWidth="80dp" />
+
+                                <TextView
+                                    style="@style/TextBody"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Atlético vs Sevilla"
+                                    android:textSize="14sp" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Espacio reducido -->
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <!-- Navigation Drawer con fondo oscuro -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/background_white"
+        android:fitsSystemWindows="true"
+        app:headerLayout="@layout/drawer_header"
+        app:menu="@menu/drawer_menu"
+        app:itemIconTint="@color/secondary_green"
+        app:itemTextColor="@color/text_dark" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

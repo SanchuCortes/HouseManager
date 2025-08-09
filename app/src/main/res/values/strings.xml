@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name"></string>
+
+    <!-- Navigation Drawer -->
+    <string name="open">Abrir menú</string>
+    <string name="close">Cerrar menú</string>
+
+    <!-- Menu items -->
+    <string name="menu_leagues">Mis Ligas</string>
+    <string name="menu_create_league">Crear Liga</string>
+    <string name="menu_join_league">Unirse a Liga</string>
+    <string name="menu_statistics">Estadísticas</string>
+    <string name="menu_settings">Ajustes</string>
+    <string name="menu_help">Ayuda</string>
+
+    <!-- Main activity -->
+    <string name="welcome_title">¡Hola, Manager!</string>
+    <string name="welcome_subtitle">Gestiona tu equipo desde casa</string>
+    <string name="summary_title">Tu Resumen</string>
+    <string name="active_leagues">Ligas activas</string>
+    <string name="available_money">Dinero disponible</string>
+    <string name="what_to_do">¿Qué quieres hacer?</string>
+    <string name="view_leagues">Ver mis ligas</string>
+    <string name="create_league">Crear nueva liga</string>
+    <string name="join_league">Unirse a liga</string>
+    <string name="app_footer">Versión 1.0 - Tu fantasy football favorito</string>
+
+    <!-- Content descriptions -->
+    <string name="home_icon">Icono de casa</string>
+    <string name="stats_icon">Icono de estadísticas</string>
+    <string name="money_icon">Icono de dinero</string>
+    <string name="info_icon">Icono de información</string>
+    <string name="fab_description">Acción rápida</string>
+</resources>

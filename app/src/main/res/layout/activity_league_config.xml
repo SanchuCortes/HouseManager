@@ -1,0 +1,547 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background_field_enhanced"
+    tools:context=".LeagueConfigActivity">
+
+    <!-- AppBar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:elevation="4dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary_blue"
+            app:title="Configurar Liga Privada"
+            app:titleTextColor="@color/white"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            app:navigationIconTint="@color/white" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Contenido principal -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Información básica -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/CardPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        style="@style/TextSubtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="⚽ Información Básica"
+                        android:textColor="@color/accent_gold"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Nombre de la liga -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/til_league_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxStrokeColor="@color/secondary_green"
+                        app:hintTextColor="@color/gray_medium"
+                        app:boxBackgroundColor="@color/gray_light">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_league_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Nombre de la liga"
+                            android:maxLength="30"
+                            android:singleLine="true"
+                            android:textColor="@color/text_dark"
+                            android:textColorHint="@color/gray_medium" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Presupuesto inicial -->
+                    <TextView
+                        style="@style/TextBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="💰 Presupuesto Inicial"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <Spinner
+                        android:id="@+id/spinner_budget"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginBottom="16dp"
+                        android:background="@drawable/rounded_background_light"
+                        android:padding="12dp" />
+
+                    <!-- Hora actualización mercado -->
+                    <TextView
+                        style="@style/TextBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="🕐 Hora Actualización Mercado"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <Spinner
+                        android:id="@+id/spinner_market_hour"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/rounded_background_light"
+                        android:padding="12dp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Configuración de equipo inicial -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/CardPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        style="@style/TextSubtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="⚽ Equipo Inicial"
+                        android:textColor="@color/accent_gold"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        style="@style/TextSecondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Precio de equipo inicial"
+                        android:textColor="@color/gray_medium"
+                        android:layout_marginBottom="16dp" />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chip_group_initial_team"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:singleSelection="true"
+                        app:selectionRequired="true">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_empty_team"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Equipo Vacío"
+                            android:checked="true"
+                            android:checkable="true"
+                            android:textColor="@color/white"
+                            app:chipBackgroundColor="@color/secondary_green"
+                            app:checkedIconTint="@color/white" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_random_100m"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Aleatorio 100M"
+                            android:checkable="true"
+                            android:textColor="@color/text_dark"
+                            app:chipBackgroundColor="@color/gray_light"
+                            app:checkedIconTint="@color/white" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_random_120m"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Aleatorio 120M"
+                            android:checkable="true"
+                            android:textColor="@color/text_dark"
+                            app:chipBackgroundColor="@color/gray_light"
+                            app:checkedIconTint="@color/white" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_random_150m"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Aleatorio 150M"
+                            android:checkable="true"
+                            android:textColor="@color/text_dark"
+                            app:chipBackgroundColor="@color/gray_light"
+                            app:checkedIconTint="@color/white" />
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Configuración de transferencias -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/CardPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        style="@style/TextSubtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="💸 Transferencias"
+                        android:textColor="@color/accent_gold"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Robos por cláusula -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:text="🔒"
+                            android:textSize="20sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextBody"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Robos por Cláusula"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                style="@style/TextSecondary"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Permitir comprar jugadores pagando su cláusula" />
+
+                        </LinearLayout>
+
+                        <Switch
+                            android:id="@+id/switch_clause_robbery"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true" />
+
+                    </LinearLayout>
+
+                    <!-- Cesiones -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:text="🔄"
+                            android:textSize="20sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextBody"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Cesiones"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                style="@style/TextSecondary"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Permitir cesiones temporales entre equipos" />
+
+                        </LinearLayout>
+
+                        <Switch
+                            android:id="@+id/switch_loans"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
+
+                    </LinearLayout>
+
+                    <!-- Días de bloqueo -->
+                    <TextView
+                        style="@style/TextBody"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="🔒 Días de Bloqueo tras Compra"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        style="@style/TextSecondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tiempo que un jugador está bloqueado tras ser comprado"
+                        android:layout_marginBottom="16dp" />
+
+                    <SeekBar
+                        android:id="@+id/slider_block_days"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:min="7"
+                        android:max="21"
+                        android:progress="14" />
+
+                    <TextView
+                        android:id="@+id/tv_block_days"
+                        style="@style/TextSecondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="14 días"
+                        android:gravity="center"
+                        android:layout_marginTop="8dp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Configuración de juego -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/CardPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        style="@style/TextSubtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="⚡ Configuración de Juego"
+                        android:textColor="@color/accent_gold"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Capitán -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:text="⭐"
+                            android:textSize="20sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextBody"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Capitán (Puntuación x2)"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                style="@style/TextSecondary"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="El capitán puntúa el doble en cada jornada" />
+
+                        </LinearLayout>
+
+                        <Switch
+                            android:id="@+id/switch_captain"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true" />
+
+                    </LinearLayout>
+
+                    <!-- Banquillo -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:text="🪑"
+                            android:textSize="20sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextBody"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Banquillo"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                style="@style/TextSecondary"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="1 jugador de cada posición en el banquillo" />
+
+                        </LinearLayout>
+
+                        <Switch
+                            android:id="@+id/switch_bench"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true" />
+
+                    </LinearLayout>
+
+                    <!-- Entrenador -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:text="👨‍💼"
+                            android:textSize="20sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/TextBody"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Entrenador"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                style="@style/TextSecondary"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Incluir entrenador en el equipo fantasy" />
+
+                        </LinearLayout>
+
+                        <Switch
+                            android:id="@+id/switch_coach"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Botones de acción -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_cancel"
+                    style="@style/ButtonSecondary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Cancelar" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_create_league"
+                    style="@style/ButtonPrimary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Crear Liga" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

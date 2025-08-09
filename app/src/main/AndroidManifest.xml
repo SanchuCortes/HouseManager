@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permisos necesarios -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- SDK mínimo para compatibilidad -->
+    <uses-sdk android:minSdkVersion="24" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.HouseManager"
+        tools:targetApi="31">
+
+        <!-- LoginActivity - ACTIVIDAD DE INICIO -->
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- MainActivity - Actividad principal después del login -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager" />
+
+        <!-- LeaguesActivity - Pantalla de ligas -->
+        <activity
+            android:name=".LeaguesActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- CreateLeagueActivity - Selección de tipo de liga -->
+        <activity
+            android:name=".CreateLeagueActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- LeagueConfigActivity - Configuración detallada de liga privada -->
+        <activity
+            android:name=".LeagueConfigActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager"
+            android:parentActivityName=".CreateLeagueActivity" />
+
+    </application>
+
+</manifest>

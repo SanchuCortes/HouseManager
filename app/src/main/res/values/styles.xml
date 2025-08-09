@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema base OSCURO -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="colorPrimaryVariant">@color/primary_blue_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/secondary_green</item>
+        <item name="colorSecondaryVariant">@color/green_pressed</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:colorBackground">@color/background_white</item>
+        <item name="colorOnBackground">@color/text_dark</item>
+        <item name="colorSurface">@color/card_background</item>
+        <item name="colorOnSurface">@color/text_dark</item>
+        <item name="android:textColorPrimary">@color/text_dark</item>
+        <item name="android:windowBackground">@color/background_white</item>
+    </style>
+
+    <!-- Boton principal verde -->
+    <style name="ButtonPrimary" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/secondary_green</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:layout_marginHorizontal">16dp</item>
+        <item name="android:layout_marginVertical">8dp</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="rippleColor">@color/green_ripple</item>
+        <item name="android:elevation">4dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- Boton outline verde -->
+    <style name="ButtonSecondary" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="strokeColor">@color/secondary_green</item>
+        <item name="android:textColor">@color/secondary_green</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:layout_marginHorizontal">16dp</item>
+        <item name="android:layout_marginVertical">8dp</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="rippleColor">@color/green_ripple</item>
+        <item name="strokeWidth">2dp</item>
+    </style>
+
+    <!-- Boton pequeño -->
+    <style name="ButtonSmall" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/secondary_green</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:paddingHorizontal">16dp</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="rippleColor">@color/green_ripple</item>
+        <item name="android:elevation">2dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- Card principal OSCURO -->
+    <style name="CardPrimary" parent="Widget.MaterialComponents.CardView">
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">8dp</item>
+        <item name="android:layout_margin">16dp</item>
+        <item name="cardBackgroundColor">@color/card_background</item>
+        <item name="contentPadding">20dp</item>
+        <item name="rippleColor">@color/blue_ripple</item>
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <!-- Card para listas OSCURO -->
+    <style name="CardList" parent="Widget.MaterialComponents.CardView">
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">6dp</item>
+        <item name="android:layout_marginHorizontal">16dp</item>
+        <item name="android:layout_marginVertical">6dp</item>
+        <item name="cardBackgroundColor">@color/card_background</item>
+        <item name="contentPadding">16dp</item>
+        <item name="rippleColor">@color/blue_ripple</item>
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <!-- Titulo principal -->
+    <style name="TextTitle">
+        <item name="android:textSize">28sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_dark</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Subtitulo -->
+    <style name="TextSubtitle">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_dark</item>
+        <item name="android:layout_marginBottom">4dp</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Texto normal -->
+    <style name="TextBody">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_dark</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Texto secundario -->
+    <style name="TextSecondary">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/gray_medium</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Texto del header del drawer -->
+    <style name="TextDrawerHeader">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Contenedor principal -->
+    <style name="ContainerMain">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:padding">16dp</item>
+        <item name="android:background">@color/background_white</item>
+    </style>
+
+    <!-- Separador -->
+    <style name="Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">@color/gray_light</item>
+        <item name="android:layout_marginVertical">16dp</item>
+    </style>
+
+    <!-- FAB -->
+    <style name="FABPrimary" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="backgroundTint">@color/secondary_green</item>
+        <item name="tint">@color/white</item>
+        <item name="rippleColor">@color/green_ripple</item>
+        <item name="android:layout_margin">16dp</item>
+        <item name="elevation">8dp</item>
+        <item name="pressedTranslationZ">12dp</item>
+    </style>
+
+    <!-- Header del drawer OSCURO -->
+    <style name="DrawerHeader">
+        <item name="android:background">@color/primary_blue</item>
+        <item name="android:padding">24dp</item>
+        <item name="android:layout_height">180dp</item>
+        <item name="android:gravity">bottom</item>
+    </style>
+
+    <!-- Items del drawer -->
+    <style name="DrawerItem">
+        <item name="android:layout_height">56dp</item>
+        <item name="android:paddingHorizontal">16dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_dark</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:drawablePadding">32dp</item>
+    </style>
+
+    <!-- Toolbar -->
+    <style name="ToolbarStyle" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="android:background">@color/primary_blue</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="android:elevation">4dp</item>
+        <item name="titleTextAppearance">@style/ToolbarTitleText</item>
+    </style>
+
+    <style name="ToolbarTitleText">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+</resources>
