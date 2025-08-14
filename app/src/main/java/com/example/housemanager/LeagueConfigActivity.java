@@ -138,18 +138,27 @@ public class LeagueConfigActivity extends AppCompatActivity {
     private void createLeague() {
         String leagueName = etLeagueName.getText().toString().trim();
 
+        // Validar nombre obligatorio
         if (leagueName.isEmpty()) {
             tilLeagueName.setError("El nombre de la liga es obligatorio");
+            return;
+        }
+
+        // Validar longitud máxima
+        if (leagueName.length() > 30) {
+            tilLeagueName.setError("El nombre no puede superar 30 caracteres");
             return;
         }
 
         // Limpiar error si había
         tilLeagueName.setError(null);
 
-        // Obtener configuración
+        // Obtener configuración del formulario
         String budget = (String) spinnerBudget.getSelectedItem();
         String marketHour = (String) spinnerMarketHour.getSelectedItem();
-        int selectedTeamOption = chipGroupInitialTeam.getCheckedChipId();
+
+        // Obtener tipo de equipo inicial seleccionado
+        String teamType = getSelectedTeamType();
 
         boolean clauseRobbery = switchClauseRobbery.isChecked();
         boolean loans = switchLoans.isChecked();
@@ -158,19 +167,62 @@ public class LeagueConfigActivity extends AppCompatActivity {
         boolean bench = switchBench.isChecked();
         boolean coach = switchCoach.isChecked();
 
-        // TODO: Guardar configuración en BD/API
-        // Por ahora solo mostramos mensaje
-        Toast.makeText(this, "Liga '" + leagueName + "' creada con éxito!\n" +
-                        "Presupuesto: " + budget + "\n" +
-                        "Hora mercado: " + marketHour + "\n" +
-                        "Días bloqueo: " + blockDays,
-                Toast.LENGTH_LONG).show();
+        // Guardar la liga usando LeagueManager
+        LeagueManager.League newLeague = saveLeague(leagueName, budget, marketHour, teamType);
 
-        // Volver a la pantalla de ligas
-        Intent intent = new Intent(this, LeaguesActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-        finish();
+        if (newLeague != null) {
+            // Mostrar mensaje de éxito
+            Toast.makeText(this,
+                    "¡Liga '" + leagueName + "' creada con éxito!\n" +
+                            "Presupuesto: " + budget + "\n" +
+                            "Hora mercado: " + marketHour,
+                    Toast.LENGTH_LONG).show();
+
+            // Volver a la pantalla de ligas
+            Intent intent = new Intent(this, LeaguesActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            finish();
+        } else {
+            Toast.makeText(this, "Error al crear la liga. Inténtalo de nuevo.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // Método auxiliar para obtener el tipo de equipo seleccionado
+    private String getSelectedTeamType() {
+        int selectedChipId = chipGroupInitialTeam.getCheckedChipId();
+
+        if (selectedChipId == R.id.chip_empty_team) {
+            return "Equipo Vacío";
+        } else if (selectedChipId == R.id.chip_random_100m) {
+            return "Aleatorio 100M";
+        } else if (selectedChipId == R.id.chip_random_120m) {
+            return "Aleatorio 120M";
+        } else if (selectedChipId == R.id.chip_random_150m) {
+            return "Aleatorio 150M";
+        } else {
+            return "Equipo Vacío"; // Por defecto
+        }
+    }
+
+    // Método para guardar la liga en el manager
+    private LeagueManager.League saveLeague(String name, String budget, String marketHour, String teamType) {
+        try {
+            // Crear y guardar la liga usando LeagueManager
+            LeagueManager.League newLeague = LeagueManager.getInstance().createLeague(
+                    name,
+                    budget,
+                    marketHour,
+                    teamType,
+                    true // siempre es privada desde esta pantalla
+            );
+
+            return newLeague;
+        } catch (Exception e) {
+            // Log del error (en una app real usarías Log.e)
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override

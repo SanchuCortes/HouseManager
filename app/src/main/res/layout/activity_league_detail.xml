@@ -1,65 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background_field_enhanced"
+    android:background="@color/background_white"
     tools:context=".LeagueDetailActivity">
 
-    <!-- AppBar con nombre de la liga -->
+    <!-- Toolbar -->
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appbar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:elevation="4dp">
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
-        <com.google.android.material.appbar.MaterialToolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
+            android:layout_height="?attr/actionBarSize"
             android:background="@color/primary_blue"
-            app:navigationIcon="@drawable/ic_menu"
-            app:navigationIconTint="@color/white">
-
-            <!-- Header personalizado -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingEnd="16dp">
-
-                <!-- Nombre de la liga centrado -->
-                <TextView
-                    android:id="@+id/tv_league_name"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Liga Premium"
-                    android:textColor="@color/white"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:layout_marginStart="48dp" />
-
-                <!-- Icono de invitar -->
-                <ImageView
-                    android:id="@+id/iv_invite_friends"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:src="@drawable/ic_person_add"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:padding="4dp"
-                    app:tint="@color/white"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-            </LinearLayout>
-
-        </com.google.android.material.appbar.MaterialToolbar>
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -68,173 +27,130 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:fillViewport="true">
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Dropdown para filtrar jornadas -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="space_between">
-
-                <!-- Dropdown jornadas -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:cardBackgroundColor="@color/card_background"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:id="@+id/layout_matchday_selector"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="12dp"
-                        android:gravity="center_vertical"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:focusable="true">
-
-                        <TextView
-                            android:id="@+id/tv_matchday"
-                            style="@style/TextBody"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Jornada 15"
-                            android:textStyle="bold"
-                            android:layout_marginEnd="8dp" />
-
-                        <ImageView
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:src="@drawable/ic_arrow_forward"
-                            android:rotation="90"
-                            app:tint="@color/text_dark" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-            </LinearLayout>
-
-            <!-- Header del usuario con su posición -->
+            <!-- Card: Información de la Liga -->
             <com.google.android.material.card.MaterialCardView
-                style="@style/CardPrimary"
+                android:id="@+id/card_league_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                    <!-- Posición y avatar -->
+                    <!-- Header con icono y nombre -->
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
 
-                        <!-- Número de posición -->
-                        <TextView
-                            android:id="@+id/tv_user_position"
-                            style="@style/TextTitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1"
-                            android:textColor="@color/accent_gold"
-                            android:textSize="28sp"
-                            android:layout_marginEnd="12dp" />
-
-                        <!-- Avatar del usuario -->
                         <ImageView
-                            android:id="@+id/iv_user_avatar"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
+                            android:id="@+id/iv_league_icon"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
                             android:src="@drawable/ic_person"
-                            android:background="@drawable/circle_background_green_light"
-                            android:padding="8dp"
-                            android:layout_marginEnd="12dp" />
-
-                    </LinearLayout>
-
-                    <!-- Info del usuario -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tv_user_name"
-                            style="@style/TextSubtitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Manager"
-                            android:textColor="@color/text_dark"
-                            android:textSize="16sp"
-                            android:layout_marginBottom="2dp" />
+                            android:layout_marginEnd="16dp"
+                            app:tint="@color/secondary_green" />
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
-
-                            <ImageView
-                                android:layout_width="14dp"
-                                android:layout_height="14dp"
-                                android:src="@drawable/ic_euro"
-                                app:tint="@color/accent_gold"
-                                android:layout_marginEnd="4dp" />
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
                             <TextView
-                                android:id="@+id/tv_user_money"
-                                style="@style/TextSecondary"
+                                android:id="@+id/tv_league_name"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="67.4M €"
+                                android:text="Mi Liga Fantasy"
+                                android:textColor="@color/text_dark"
+                                android:textSize="24sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_league_type"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Liga Privada"
                                 android:textColor="@color/gray_medium"
-                                android:textSize="12sp" />
+                                android:textSize="16sp"
+                                android:layout_marginTop="4dp" />
 
                         </LinearLayout>
 
                     </LinearLayout>
 
-                    <!-- Puntos del usuario -->
-                    <LinearLayout
+                    <!-- Chips de estado -->
+                    <com.google.android.material.chip.ChipGroup
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:gravity="end">
+                        android:layout_marginBottom="16dp">
 
-                        <TextView
-                            android:id="@+id/tv_user_points"
-                            style="@style/TextTitle"
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_active"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
-                            android:textColor="@color/accent_gold"
-                            android:textSize="24sp" />
+                            android:text="🟢 Activa"
+                            android:textColor="@color/text_dark"
+                            app:chipBackgroundColor="@color/secondary_green"
+                            app:chipCornerRadius="20dp" />
 
-                        <TextView
-                            style="@style/TextSecondary"
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_private"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="PUNTOS"
-                            android:textSize="10sp"
-                            android:textColor="@color/gray_medium" />
+                            android:text="🔒 Privada"
+                            android:textColor="@color/text_dark"
+                            app:chipBackgroundColor="@color/accent_gold"
+                            app:chipCornerRadius="20dp" />
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- Información básica -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_participants"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="👥 8/12 jugadores"
+                            android:textColor="@color/text_dark"
+                            android:textSize="16sp"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:id="@+id/tv_budget"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💰 Presupuesto: 150M €"
+                            android:textColor="@color/text_dark"
+                            android:textSize="16sp"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:id="@+id/tv_market_update"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🕐 Actualización: 14:00h diaria"
+                            android:textColor="@color/text_dark"
+                            android:textSize="16sp" />
 
                     </LinearLayout>
 
@@ -242,74 +158,171 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Estado de la liga -->
-            <LinearLayout
-                android:id="@+id/layout_league_state"
+            <!-- Card: Configuración de la Liga -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="24dp"
-                android:visibility="visible">
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp">
 
-                <!-- Icono de estado -->
-                <ImageView
-                    android:id="@+id/iv_league_state"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:src="@drawable/ic_trophy"
-                    android:background="@drawable/circle_background_green_light"
-                    android:padding="20dp"
-                    app:tint="@color/accent_gold"
-                    android:layout_marginBottom="16dp" />
-
-                <!-- Mensaje principal -->
-                <TextView
-                    android:id="@+id/tv_league_state_message"
-                    style="@style/TextBody"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Tu liga necesita rivales"
-                    android:textColor="@color/text_dark"
-                    android:textAlignment="center"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                <!-- Submensaje -->
-                <TextView
-                    android:layout_width="wrap_content"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚙️ Configuración"
+                        android:textColor="@color/text_dark"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Tipo de equipo inicial -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Equipo Inicial:"
+                        android:textColor="@color/secondary_green"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_team_type"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Aleatorio 150M"
+                        android:textColor="@color/text_dark"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="16dp"
+                        android:layout_marginStart="8dp" />
+
+                    <!-- Reglas de transferencias -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Transferencias:"
+                        android:textColor="@color/secondary_green"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_transfer_rules"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="• Robos por cláusula: Activado\n• Cesiones: Desactivado\n• Días de bloqueo: 14 días"
+                        android:textColor="@color/text_dark"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="16dp"
+                        android:layout_marginStart="8dp"
+                        android:lineSpacingExtra="4dp" />
+
+                    <!-- Configuración de juego -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Configuración de Juego:"
+                        android:textColor="@color/secondary_green"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_game_config"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="• Capitán (x2): Activado\n• Banquillo: Activado\n• Entrenador: Desactivado"
+                        android:textColor="@color/text_dark"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp"
+                        android:lineSpacingExtra="4dp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card: Acciones Rápidas -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_actions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="La competición empieza con más managers"
-                    android:textColor="@color/gray_medium"
-                    android:textAlignment="center"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="24dp" />
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                <!-- Botón de acción -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_invite_friends"
-                    style="@style/ButtonPrimary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Invitar Managers"
-                    android:paddingHorizontal="32dp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🚀 Acciones Rápidas"
+                        android:textColor="@color/text_dark"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp" />
 
-            </LinearLayout>
+                    <!-- Botón Mi Equipo -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_my_team"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="👥 Mi Equipo"
+                        android:textColor="@color/text_dark"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="12dp"
+                        app:backgroundTint="@color/secondary_green"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_person"
+                        app:iconTint="@color/text_dark" />
+
+                    <!-- Botón Clasificación -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_classification"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="🏆 Clasificación"
+                        android:textColor="@color/secondary_green"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="12dp"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/secondary_green"
+                        app:strokeWidth="2dp"
+                        app:icon="@drawable/ic_trophy"
+                        app:iconTint="@color/secondary_green" />
+
+                    <!-- Botón Transferencias -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_transfers"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="💸 Transferencias"
+                        android:textColor="@color/secondary_green"
+                        android:textSize="16sp"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/secondary_green"
+                        app:strokeWidth="2dp"
+                        app:icon="@drawable/ic_euro"
+                        app:iconTint="@color/secondary_green" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
-
-    <!-- Bottom Navigation -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/card_background"
-        app:itemIconTint="@color/secondary_green"
-        app:itemTextColor="@color/text_dark"
-        app:menu="@menu/bottom_nav_league"
-        app:labelVisibilityMode="labeled" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

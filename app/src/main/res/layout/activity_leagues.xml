@@ -56,34 +56,36 @@
                 android:padding="32dp"
                 android:visibility="gone">
 
-                <!-- Icono de estado vacío - TROFEO ROTO DORADO -->
+                <!-- Icono de estado vacío -->
                 <ImageView
                     android:id="@+id/empty_state_icon"
                     android:layout_width="120dp"
                     android:layout_height="120dp"
-                    android:src="@drawable/ic_trophy_broken"
-                    android:layout_marginBottom="24dp" />
+                    android:src="@drawable/ic_trophy"
+                    android:layout_marginBottom="24dp"
+                    app:tint="@color/accent_gold" />
 
-                <!-- Título DORADO -->
+                <!-- Título -->
                 <TextView
                     android:id="@+id/empty_state_title"
-                    style="@style/TextTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="¡Ups! Aún no hay ligas"
                     android:textColor="@color/accent_gold"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
                     android:textAlignment="center"
                     android:layout_marginBottom="12dp" />
 
                 <!-- Subtítulo -->
                 <TextView
                     android:id="@+id/empty_state_subtitle"
-                    style="@style/TextSecondary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Crea tu primera liga o únete a una existente para empezar a jugar"
                     android:textAlignment="center"
-                    android:textColor="@color/gray_light"
+                    android:textColor="@color/gray_medium"
+                    android:textSize="16sp"
                     android:layout_marginBottom="32dp" />
 
                 <!-- Botones -->
@@ -96,21 +98,27 @@
                     <!-- Botón para crear liga -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_create_league_empty"
-                        style="@style/ButtonPrimary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Crear Nueva Liga"
                         android:layout_marginBottom="12dp"
+                        android:textColor="@color/white"
+                        app:backgroundTint="@color/secondary_green"
+                        app:cornerRadius="12dp"
                         app:icon="@drawable/ic_add"
                         app:iconTint="@color/white" />
 
                     <!-- Botón para unirse a liga -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_join_league_empty"
-                        style="@style/ButtonSecondary"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Unirse a Liga"
+                        android:textColor="@color/secondary_green"
+                        app:cornerRadius="12dp"
+                        app:strokeColor="@color/secondary_green"
+                        app:strokeWidth="2dp"
                         app:icon="@drawable/ic_group_add"
                         app:iconTint="@color/secondary_green" />
 
@@ -121,5 +129,16 @@
         </FrameLayout>
 
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Botón flotante para crear liga -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_create_league"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="@color/secondary_green"
+        app:tint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

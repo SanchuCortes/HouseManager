@@ -17,8 +17,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "FOOTBALL_API_KEY", "\"${project.findProperty("FOOTBALL_API_KEY") ?: ""}\"")
+        }
         release {
             isMinifyEnabled = false
+            buildConfigField("String", "FOOTBALL_API_KEY", "\"${project.findProperty("FOOTBALL_API_KEY") ?: ""}\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -33,6 +37,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
@@ -41,17 +46,24 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
     implementation("com.google.android.material:material:1.11.0")
 
-    // Room
+    // Room Database
     implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
     annotationProcessor("androidx.room:room-compiler:2.6.1")
 
-    // Retrofit + Gson
+    // Retrofit + Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
-    // Glide
+    // ViewModel y LiveData
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.7.0")
+
+    // Glide para imágenes
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 

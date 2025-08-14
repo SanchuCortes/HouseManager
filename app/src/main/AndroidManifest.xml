@@ -63,6 +63,22 @@
             android:theme="@style/Theme.HouseManager"
             android:parentActivityName=".CreateLeagueActivity" />
 
+        <!-- LeagueDetailActivity - Detalle de una liga específica -->
+        <activity
+            android:name=".LeagueDetailActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager"
+            android:parentActivityName=".LeaguesActivity" />
+
+        <!-- MyTeamActivity - Mi equipo fantasy -->
+        <activity
+            android:name=".MyTeamActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager"
+            android:parentActivityName=".LeagueDetailActivity" />
+
     </application>
 
 </manifest>
