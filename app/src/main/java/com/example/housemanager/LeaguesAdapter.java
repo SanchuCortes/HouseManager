@@ -5,17 +5,18 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.List;
 
+// Pinta nombre, tipo, participantes y estado. Abre detalle al pulsar.
 public class LeaguesAdapter extends RecyclerView.Adapter<LeaguesAdapter.LeagueViewHolder> {
 
-    private List<LeagueManager.League> leagues;
-    private Context context;
+    private final List<LeagueManager.League> leagues;
+    private final Context context;
 
     public LeaguesAdapter(List<LeagueManager.League> leagues, Context context) {
         this.leagues = leagues;
@@ -25,68 +26,39 @@ public class LeaguesAdapter extends RecyclerView.Adapter<LeaguesAdapter.LeagueVi
     @NonNull
     @Override
     public LeagueViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_league, parent, false);
-        return new LeagueViewHolder(view);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_league, parent, false);
+        return new LeagueViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull LeagueViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull LeagueViewHolder h, int position) {
         LeagueManager.League league = leagues.get(position);
-        Context context = holder.itemView.getContext();
 
-        holder.tvLeagueName.setText(league.getName());
-        holder.tvLeagueDescription.setText(league.getType()); // Tipo de liga como descripción
-        holder.tvParticipants.setText(league.getParticipants());
-        holder.tvStatus.setText(league.getStatus());
+        h.tvLeagueName.setText(league.getName());
+        h.tvLeagueDescription.setText(league.getType());
+        h.tvParticipants.setText(league.getParticipants() + " participantes");
+        h.tvStatus.setText(league.getStatus());
 
-        // Cambiar icono según el tipo de liga
-        if (league.isPrivate()) {
-            holder.ivLeagueIcon.setImageResource(R.drawable.ic_person);
-            // Tint verde para ligas privadas
-            holder.ivLeagueIcon.setColorFilter(ContextCompat.getColor(context, R.color.secondary_green));
-        } else {
-            holder.ivLeagueIcon.setImageResource(R.drawable.ic_group_add);
-            // Tint dorado para ligas comunitarias
-            holder.ivLeagueIcon.setColorFilter(ContextCompat.getColor(context, R.color.accent_gold));
-        }
-
-        // Cambiar color según el estado
-        if ("Activa".equals(league.getStatus())) {
-            holder.tvStatus.setTextColor(ContextCompat.getColor(context, R.color.secondary_green));
-        } else {
-            holder.tvStatus.setTextColor(ContextCompat.getColor(context, R.color.gray_medium));
-        }
-
-        // Click listener para navegar a detalles de la liga
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, LeagueDetailActivity.class);
-            intent.putExtra("league_name", league.getName());
-            intent.putExtra("league_type", league.getType());
-            intent.putExtra("is_private", league.isPrivate());
-            intent.putExtra("budget", league.getBudget());
-            intent.putExtra("participants", league.getParticipants());
-            intent.putExtra("market_hour", league.getMarketHour());
-            intent.putExtra("team_type", league.getTeamType());
-            context.startActivity(intent);
+        // Al pulsar, abro detalle con datos mínimos.
+        h.itemView.setOnClickListener(v -> {
+            Intent i = new Intent(context, LeagueDetailActivity.class);
+            i.putExtra("EXTRA_NAME", league.getName());
+            i.putExtra("EXTRA_TYPE", league.getType());
+            i.putExtra("EXTRA_BUDGET", league.getBudget());
+            i.putExtra("EXTRA_MARKET_HOUR", league.getMarketHour());
+            i.putExtra("EXTRA_TEAM_TYPE", league.getTeamType());
+            i.putExtra("EXTRA_PARTICIPANTS", league.getParticipants());
+            context.startActivity(i);
         });
     }
 
     @Override
-    public int getItemCount() {
-        return leagues.size();
-    }
+    public int getItemCount() { return leagues.size(); }
 
     static class LeagueViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivLeagueIcon;
-        TextView tvLeagueName;
-        TextView tvLeagueDescription;
-        TextView tvParticipants;
-        TextView tvStatus;
-
-        public LeagueViewHolder(@NonNull View itemView) {
+        TextView tvLeagueName, tvLeagueDescription, tvParticipants, tvStatus;
+        LeagueViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivLeagueIcon = itemView.findViewById(R.id.iv_league_icon);
             tvLeagueName = itemView.findViewById(R.id.tv_league_name);
             tvLeagueDescription = itemView.findViewById(R.id.tv_league_description);
             tvParticipants = itemView.findViewById(R.id.tv_participants);

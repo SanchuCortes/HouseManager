@@ -1,176 +1,70 @@
 package com.example.housemanager;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
-/**
- * Gestor singleton para manejar las ligas del usuario
- * Simula una base de datos temporal hasta implementar Room
- */
+// Fuente única de datos mock para no depender de Room/API en el MVP.
 public class LeagueManager {
 
-    private static LeagueManager instance;
-    private List<League> leaguesList;
-    private SimpleDateFormat dateFormat;
-
-    private LeagueManager() {
-        leaguesList = new ArrayList<>();
-        dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-
-        // Añadimos ligas de ejemplo para que no esté vacío
-        addExampleLeagues();
-    }
-
+    // Singleton rápido para acceder desde Activities.
+    private static LeagueManager INSTANCE;
     public static LeagueManager getInstance() {
-        if (instance == null) {
-            instance = new LeagueManager();
-        }
-        return instance;
+        if (INSTANCE == null) INSTANCE = new LeagueManager();
+        return INSTANCE;
     }
 
-    // Añade una nueva liga creada por el usuario
-    public void addLeague(League league) {
-        if (league != null) {
-            // Asignar fecha actual
-            league.setCreatedDate(dateFormat.format(new Date()));
-            leaguesList.add(league);
-        }
-    }
+    // Modelo simple que cubre lo que muestran las pantallas.
+    public static class League implements Serializable {
+        private final String name;
+        private final String type;        // "Privada" / "Comunitaria"
+        private final boolean isPrivate;
+        private final int budget;         // 100..200 (M€)
+        private final String marketHour;  // "14:00"
+        private final String teamType;    // "Equipo Vacío", "Aleatorio 150M", etc.
+        private final int participants;   // nº usuarios
+        private final String status;      // "Activa"…
+        private final String createdDate; // "dd/MM/yyyy"
 
-    // Crea y guarda una liga desde los datos del formulario
-    public League createLeague(String name, String budget, String marketHour,
-                               String teamType, boolean isPrivate) {
-        League newLeague = new League(
-                name,
-                isPrivate ? "Liga Privada" : "Liga Comunitaria",
-                isPrivate,
-                budget,
-                "1/12 jugadores" // Empieza con 1 jugador (el creador)
-        );
-
-        // Configuración adicional
-        newLeague.setMarketHour(marketHour);
-        newLeague.setTeamType(teamType);
-        newLeague.setStatus("Activa");
-
-        addLeague(newLeague);
-        return newLeague;
-    }
-
-    // Obtiene todas las ligas del usuario
-    public List<League> getAllLeagues() {
-        return new ArrayList<>(leaguesList);
-    }
-
-    // Busca una liga por nombre
-    public League getLeagueByName(String name) {
-        for (League league : leaguesList) {
-            if (league.getName().equals(name)) {
-                return league;
-            }
-        }
-        return null;
-    }
-
-    // Obtiene el número total de ligas
-    public int getLeaguesCount() {
-        return leaguesList.size();
-    }
-
-    // Limpia todas las ligas (para testing)
-    public void clearAllLeagues() {
-        leaguesList.clear();
-        addExampleLeagues();
-    }
-
-    // Añade ligas de ejemplo para demostración
-    private void addExampleLeagues() {
-        League example1 = new League(
-                "Liga de Amigos",
-                "Liga Privada",
-                true,
-                "150M €",
-                "8/12 jugadores"
-        );
-        example1.setStatus("Activa");
-        example1.setCreatedDate("15/01/2025");
-        example1.setMarketHour("14:00");
-        example1.setTeamType("Aleatorio 150M");
-        leaguesList.add(example1);
-
-        League example2 = new League(
-                "Champions League",
-                "Liga Comunitaria",
-                false,
-                "200M €",
-                "24/50 jugadores"
-        );
-        example2.setStatus("Activa");
-        example2.setCreatedDate("10/01/2025");
-        example2.setMarketHour("21:00");
-        example2.setTeamType("Aleatorio 200M");
-        leaguesList.add(example2);
-    }
-
-    /**
-     * Clase League mejorada para representar una liga
-     */
-    public static class League {
-        private String name;
-        private String type;
-        private boolean isPrivate;
-        private String budget;
-        private String participants;
-        private String status;
-        private String createdDate;
-        private String marketHour;
-        private String teamType;
-
-        public League(String name, String type, boolean isPrivate, String budget, String participants) {
+        public League(String name, String type, boolean isPrivate, int budget, String marketHour,
+                      String teamType, int participants, String status, String createdDate) {
             this.name = name;
             this.type = type;
             this.isPrivate = isPrivate;
             this.budget = budget;
+            this.marketHour = marketHour;
+            this.teamType = teamType;
             this.participants = participants;
-            this.status = "Creando...";
-            this.createdDate = "Hoy";
-            this.marketHour = "14:00";
-            this.teamType = "Equipo Vacío";
+            this.status = status;
+            this.createdDate = createdDate;
         }
 
-        // Getters
         public String getName() { return name; }
         public String getType() { return type; }
         public boolean isPrivate() { return isPrivate; }
-        public String getBudget() { return budget; }
-        public String getParticipants() { return participants; }
-        public String getStatus() { return status; }
-        public String getCreatedDate() { return createdDate; }
+        public int getBudget() { return budget; }
         public String getMarketHour() { return marketHour; }
         public String getTeamType() { return teamType; }
-
-        // Setters
-        public void setName(String name) { this.name = name; }
-        public void setType(String type) { this.type = type; }
-        public void setPrivate(boolean isPrivate) { this.isPrivate = isPrivate; }
-        public void setBudget(String budget) { this.budget = budget; }
-        public void setParticipants(String participants) { this.participants = participants; }
-        public void setStatus(String status) { this.status = status; }
-        public void setCreatedDate(String createdDate) { this.createdDate = createdDate; }
-        public void setMarketHour(String marketHour) { this.marketHour = marketHour; }
-        public void setTeamType(String teamType) { this.teamType = teamType; }
-
-        @Override
-        public String toString() {
-            return "League{" +
-                    "name='" + name + '\'' +
-                    ", type='" + type + '\'' +
-                    ", participants='" + participants + '\'' +
-                    ", status='" + status + '\'' +
-                    '}';
-        }
+        public int getParticipants() { return participants; }
+        public String getStatus() { return status; }
+        public String getCreatedDate() { return createdDate; }
     }
+
+    private final List<League> leagues = new ArrayList<>();
+
+    private LeagueManager() {
+        // Arranco con 2 ligas de demo para no ver vacío.
+        String today = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(new Date());
+        leagues.add(new League("Liga Amigos", "Privada", true, 150, "14:00", "Equipo Vacío", 8, "Activa", today));
+        leagues.add(new League("Liga Pro", "Comunitaria", false, 180, "12:00", "Aleatorio 150M", 16, "Activa", today));
+    }
+
+    // Devuelvo copia para evitar modificar la lista original sin querer.
+    public List<League> getUserLeagues() { return new ArrayList<>(leagues); }
+
+    // Por si quieres añadir desde la config en el futuro.
+    public void addLeague(League league) { leagues.add(league); }
 }
