@@ -18,11 +18,20 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "FOOTBALL_API_KEY", "\"${project.findProperty("FOOTBALL_API_KEY") ?: ""}\"")
+            // Exponemos el token como BuildConfig.FOOTBALL_API_KEY
+            buildConfigField(
+                "String",
+                "FOOTBALL_API_KEY",
+                "\"${project.findProperty("FOOTBALL_API_KEY") ?: ""}\""
+            )
         }
         release {
             isMinifyEnabled = false
-            buildConfigField("String", "FOOTBALL_API_KEY", "\"${project.findProperty("FOOTBALL_API_KEY") ?: ""}\"")
+            buildConfigField(
+                "String",
+                "FOOTBALL_API_KEY",
+                "\"${project.findProperty("FOOTBALL_API_KEY") ?: ""}\""
+            )
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -31,12 +40,14 @@ android {
     }
 
     compileOptions {
+        // Si tu AGP lo permite, Java 17 va perfecto. Si no, baja a VERSION_11.
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildFeatures {
         viewBinding = true
+        dataBinding = true   // <= Necesario porque tu layout usa <layout>
         buildConfig = true
     }
 }

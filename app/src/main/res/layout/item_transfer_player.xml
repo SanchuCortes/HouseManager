@@ -1,278 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/cardPlayer"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/card_background"
+    android:padding="12dp"
     android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
-    app:cardBackgroundColor="@color/card_background"
-    app:strokeWidth="1dp"
-    app:strokeColor="@color/gray_medium">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <TextView
+        android:id="@+id/tv_name"
+        android:text="Nombre"
+        android:textColor="@color/text_dark"
+        android:textSize="16sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/tv_team"
+        android:text="Equipo"
+        android:textColor="@color/gray_medium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_marginTop="6dp">
 
-        <!-- Franja de color por posición -->
-        <View
-            android:id="@+id/layoutPositionStripe"
-            android:layout_width="4dp"
-            android:layout_height="0dp"
-            android:background="@color/secondary_green"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <!-- Foto del jugador -->
-        <ImageView
-            android:id="@+id/imagePlayer"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_marginStart="12dp"
-            android:src="@drawable/ic_player_placeholder"
-            android:scaleType="centerCrop"
-            app:layout_constraintStart_toEndOf="@id/layoutPositionStripe"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- Número de camiseta -->
         <TextView
-            android:id="@+id/textShirtNumber"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:background="@drawable/circle_background"
-            android:gravity="center"
-            android:text="10"
+            android:id="@+id/tv_pos"
+            android:text="POS"
             android:textColor="@color/text_dark"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="@id/imagePlayer"
-            app:layout_constraintTop_toTopOf="@id/imagePlayer"
-            tools:visibility="visible" />
-
-        <!-- Nombre del jugador -->
-        <TextView
-            android:id="@+id/textPlayerName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="8dp"
-            android:text="Vinicius Jr."
-            android:textColor="@color/text_dark"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintStart_toEndOf="@id/imagePlayer"
-            app:layout_constraintEnd_toStartOf="@id/textPrice"
-            app:layout_constraintTop_toTopOf="@id/imagePlayer" />
+            android:layout_weight="1"/>
 
-        <!-- Equipo -->
         <TextView
-            android:id="@+id/textTeamName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Real Madrid"
-            android:textColor="@color/gray_medium"
-            android:textSize="14sp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            app:layout_constraintStart_toStartOf="@id/textPlayerName"
-            app:layout_constraintEnd_toEndOf="@id/textPlayerName"
-            app:layout_constraintTop_toBottomOf="@id/textPlayerName" />
-
-        <!-- Badge de posición -->
-        <TextView
-            android:id="@+id/textPosition"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/badge_fwd"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="2dp"
-            android:text="DEL"
-            android:textColor="@color/text_dark"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@id/textPlayerName"
-            app:layout_constraintTop_toBottomOf="@id/textTeamName" />
-
-        <!-- Nacionalidad -->
-        <TextView
-            android:id="@+id/textNationality"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Brasil"
-            android:textColor="@color/gray_medium"
-            android:textSize="10sp"
-            app:layout_constraintStart_toEndOf="@id/textPosition"
-            app:layout_constraintTop_toTopOf="@id/textPosition"
-            app:layout_constraintBottom_toBottomOf="@id/textPosition" />
-
-        <!-- Precio -->
-        <TextView
-            android:id="@+id/textPrice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="85.0 M€"
+            android:id="@+id/tv_price"
+            android:text="€ 0.0 M"
             android:textColor="@color/accent_gold"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/imagePlayer" />
-
-        <!-- Trending de precio -->
-        <ImageView
-            android:id="@+id/iconTrending"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="4dp"
-            android:src="@drawable/ic_trending_up"
-            android:visibility="gone"
-            app:layout_constraintEnd_toStartOf="@id/textTrending"
-            app:layout_constraintTop_toBottomOf="@id/textPrice"
-            tools:visibility="visible" />
-
-        <TextView
-            android:id="@+id/textTrending"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="+2.5 M€"
-            android:textColor="@color/secondary_green"
-            android:textSize="10sp"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="@id/textPrice"
-            app:layout_constraintTop_toTopOf="@id/iconTrending"
-            tools:visibility="visible" />
-
-        <!-- Estadísticas del jugador -->
-        <LinearLayout
-            android:id="@+id/layoutStats"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal"
-            app:layout_constraintStart_toEndOf="@id/layoutPositionStripe"
-            app:layout_constraintEnd_toStartOf="@id/btnBuyPlayer"
-            app:layout_constraintTop_toBottomOf="@id/imagePlayer">
+            android:gravity="end"
+            android:layout_weight="1"/>
+    </LinearLayout>
 
-            <!-- Puntos totales -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/textPoints"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="234 pts"
-                    android:textColor="@color/text_dark"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Puntos"
-                    android:textColor="@color/gray_medium"
-                    android:textSize="10sp" />
-
-            </LinearLayout>
-
-            <!-- Partidos jugados -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/textMatches"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="15 PJ"
-                    android:textColor="@color/text_dark"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Partidos"
-                    android:textColor="@color/gray_medium"
-                    android:textSize="10sp" />
-
-            </LinearLayout>
-
-            <!-- Promedio por partido -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/textAverage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="15.6"
-                    android:textColor="@color/text_dark"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Media"
-                    android:textColor="@color/gray_medium"
-                    android:textSize="10sp" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- Botón de compra -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBuyPlayer"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_marginStart="8dp"
-            android:text="Fichar"
-            android:textSize="12sp"
-            app:cornerRadius="18dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/layoutStats"
-            app:layout_constraintBottom_toBottomOf="@id/layoutStats" />
-
-        <!-- Texto de no disponible -->
-        <TextView
-            android:id="@+id/textUnavailable"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/rounded_background_red"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
-            android:text="No disponible"
-            android:textColor="@android:color/white"
-            android:textSize="10sp"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/layoutStats"
-            app:layout_constraintBottom_toBottomOf="@id/layoutStats"
-            tools:visibility="visible" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_buy"
+        style="?attr/materialButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fichar"
+        android:textColor="@color/text_dark"
+        app:backgroundTint="@color/secondary_green"
+        android:backgroundTintMode="src_over"
+        app:rippleColor="@color/accent_gold"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>

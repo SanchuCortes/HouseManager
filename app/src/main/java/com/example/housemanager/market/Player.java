@@ -1,4 +1,4 @@
-package com.example.housemanager.database.entities;
+package com.example.housemanager.market;
 
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;

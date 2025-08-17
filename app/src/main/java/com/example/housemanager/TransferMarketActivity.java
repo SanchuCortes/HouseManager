@@ -1,4 +1,4 @@
-package com.yourpackage.housemanager.ui.activities;
+package com.example.housemanager;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,18 +14,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.google.android.material.chip.Chip;
-import com.yourpackage.housemanager.R;
-import com.yourpackage.housemanager.database.entities.Player;
-import com.yourpackage.housemanager.database.entities.Team;
-import com.yourpackage.housemanager.repository.FootballRepository;
-import com.yourpackage.housemanager.ui.adapters.TransferMarketAdapter;
-import com.yourpackage.housemanager.databinding.ActivityTransferMarketBinding;
+import com.example.housemanager.market.Player;
+import com.example.housemanager.market.Team;
+import com.example.housemanager.repository.FootballRepository; // <- puente
+import com.example.housemanager.ui.PlayerDetailActivity;
+import com.example.housemanager.ui.adapters.TransferMarketAdapter;
+import com.example.housemanager.databinding.ActivityTransferMarketBinding;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
 
 public class TransferMarketActivity extends AppCompatActivity implements TransferMarketAdapter.OnPlayerClickListener {
     private static final String TAG = "TransferMarketActivity";
@@ -58,7 +58,7 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
         repository = FootballRepository.getInstance(this);
 
         // Configurar RecyclerView
-        adapter = new TransferMarketAdapter(this, this);
+        adapter = new TransferMarketAdapter(this);
         binding.recyclerViewPlayers.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerViewPlayers.setAdapter(adapter);
     }

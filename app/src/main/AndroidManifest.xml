@@ -78,6 +78,10 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager"
             android:parentActivityName=".LeagueDetailActivity" />
+        <activity android:name=".TeamsBrowserActivity" />
+        <activity android:name=".TeamDetailActivity" />
+        <activity android:name=".ui.PlayerDetailActivity"
+            android:exported="false"/>
 
     </application>
 
