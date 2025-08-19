@@ -13,35 +13,50 @@ import com.example.housemanager.api.models.PlayerAPI;
 import java.util.ArrayList;
 import java.util.List;
 
-// Adapter sencillo: nombre y posición
 public class PlayersSimpleAdapter extends RecyclerView.Adapter<PlayersSimpleAdapter.VH> {
 
-    private List<PlayerAPI> data = new ArrayList<>();
+    public interface OnPlayerClick { void onPlayerClick(PlayerAPI player); }
 
-    public void submit(List<PlayerAPI> list) {
-        data = list != null ? list : new ArrayList<>();
+    private final List<PlayerAPI> data = new ArrayList<>();
+    private OnPlayerClick listener;
+    private int captainId = -1;
+
+    public PlayersSimpleAdapter() { this.listener = null; }
+    public PlayersSimpleAdapter(OnPlayerClick listener) { this.listener = listener; }
+
+    public void submit(List<PlayerAPI> players) {
+        data.clear();
+        if (players != null) data.addAll(players);
         notifyDataSetChanged();
     }
 
-    @NonNull @Override public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_player_simple, parent, false);
+    public void setCaptainId(int id) { captainId = id; notifyDataSetChanged(); }
+
+    @NonNull @Override
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_player_simple, parent, false);
         return new VH(v);
     }
 
-    @Override public void onBindViewHolder(@NonNull VH h, int pos) {
-        PlayerAPI p = data.get(pos);
-        h.tvName.setText(p.name);
-        h.tvPos.setText(p.position != null ? p.position : "—");
+    @Override
+    public void onBindViewHolder(@NonNull VH h, int position) {
+        PlayerAPI p = data.get(position);
+        String name = p.getName() != null ? p.getName() : "-";
+        if (p.getId() == captainId) name = "★ " + name; // marcador opcional
+        h.tvName.setText(name);
+        h.tvPos.setText(p.getPosition() != null ? p.getPosition() : "–");
+        h.itemView.setOnClickListener(v -> { if (listener != null) listener.onPlayerClick(p); });
     }
 
     @Override public int getItemCount() { return data.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
         TextView tvName, tvPos;
-        VH(@NonNull View v) {
-            super(v);
-            tvName = v.findViewById(R.id.tv_player_name);
-            tvPos  = v.findViewById(R.id.tv_player_pos);
+        VH(@NonNull View itemView) {
+            super(itemView);
+            tvName = itemView.findViewById(R.id.tv_name);
+            tvPos  = itemView.findViewById(R.id.tv_pos);
         }
     }
 }

@@ -2,11 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permisos necesarios -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- SDK mínimo para compatibilidad -->
     <uses-sdk android:minSdkVersion="24" />
 
     <application
@@ -20,7 +18,6 @@
         android:theme="@style/Theme.HouseManager"
         tools:targetApi="31">
 
-        <!-- LoginActivity - ACTIVIDAD DE INICIO -->
         <activity
             android:name=".LoginActivity"
             android:exported="true"
@@ -32,14 +29,12 @@
             </intent-filter>
         </activity>
 
-        <!-- MainActivity - Actividad principal después del login -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager" />
 
-        <!-- LeaguesActivity - Pantalla de ligas -->
         <activity
             android:name=".LeaguesActivity"
             android:exported="false"
@@ -47,7 +42,6 @@
             android:theme="@style/Theme.HouseManager"
             android:parentActivityName=".MainActivity" />
 
-        <!-- CreateLeagueActivity - Selección de tipo de liga -->
         <activity
             android:name=".CreateLeagueActivity"
             android:exported="false"
@@ -55,7 +49,6 @@
             android:theme="@style/Theme.HouseManager"
             android:parentActivityName=".MainActivity" />
 
-        <!-- LeagueConfigActivity - Configuración detallada de liga privada -->
         <activity
             android:name=".LeagueConfigActivity"
             android:exported="false"
@@ -63,7 +56,6 @@
             android:theme="@style/Theme.HouseManager"
             android:parentActivityName=".CreateLeagueActivity" />
 
-        <!-- LeagueDetailActivity - Detalle de una liga específica -->
         <activity
             android:name=".LeagueDetailActivity"
             android:exported="false"
@@ -71,17 +63,36 @@
             android:theme="@style/Theme.HouseManager"
             android:parentActivityName=".LeaguesActivity" />
 
-        <!-- MyTeamActivity - Mi equipo fantasy -->
         <activity
             android:name=".MyTeamActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager"
             android:parentActivityName=".LeagueDetailActivity" />
-        <activity android:name=".TeamsBrowserActivity" />
-        <activity android:name=".TeamDetailActivity" />
-        <activity android:name=".ui.PlayerDetailActivity"
-            android:exported="false"/>
+
+        <activity
+            android:name=".ui.team.TeamsBrowserActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager" />
+
+        <activity
+            android:name=".TeamDetailActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager" />
+
+        <activity
+            android:name=".ui.PlayerDetailActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager" />
+
+        <activity
+            android:name=".TransferMarketActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager" />
 
     </application>
 

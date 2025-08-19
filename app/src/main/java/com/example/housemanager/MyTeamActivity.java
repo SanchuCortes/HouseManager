@@ -1,82 +1,97 @@
 package com.example.housemanager;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
+import com.example.housemanager.api.models.PlayerAPI;
+import com.example.housemanager.viewmodel.FootballViewModel;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
 
-// Pantalla "Mi equipo" con jugadores mock y FAB de placeholder.
 public class MyTeamActivity extends AppCompatActivity {
 
-    // Modelo ligero para no mezclar con entidades Room.
-    public static class PlayerLite {
-        private final String name, position;
-        private final int price; // M€
+    public static final String EXTRA_TEAM_ID = "team_id";
 
-        public PlayerLite(String name, String position, int price) {
-            this.name = name; this.position = position; this.price = price;
-        }
-        public String getName() { return name; }
-        public String getPosition() { return position; }
-        public int getPrice() { return price; }
-    }
+    private FootballViewModel vm;
+    private PlayersSimpleAdapter adapter;
 
-    private final List<PlayerLite> players = new ArrayList<>();
-    private PlayersAdapter adapter;
+    private TextView tvHeader;
+    private TextView tvPoints;          // <-- CAMBIA a tu id real si no es éste
+    private MaterialButton btnTransfers;
+    private MaterialButton btnCaptain;  // se mantiene por si quieres usarlo para otra acción
+
+    private int teamId = -1;
+    private int currentCaptainId = -1;
+    private final List<PlayerAPI> currentSquad = new ArrayList<>();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_team);
 
-        // Toolbar + back.
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        if (getSupportActionBar() != null) getSupportActionBar().setTitle("Mi equipo");
+        tvHeader     = findViewById(R.id.tv_league_header);
+        tvPoints     = findViewById(R.id.tv_points);
+        btnTransfers = findViewById(R.id.btn_transfers);
+     //   btnCaptain   = findViewById(R.id.btn_captain);
 
-        // Cabecera con nombre de liga.
-        String leagueName = getIntent().getStringExtra("EXTRA_LEAGUE_NAME");
-        TextView tvHeader = findViewById(R.id.tv_league_header);
-        tvHeader.setText("Liga: " + (leagueName != null ? leagueName : "—"));
+        tvHeader.setText("Mi Liga Fantasy");
 
-        // Recycler + datos mock.
         RecyclerView rv = findViewById(R.id.recycler_players);
         rv.setLayoutManager(new LinearLayoutManager(this));
-        loadMockPlayers();
-        adapter = new PlayersAdapter(players);
+        adapter = new PlayersSimpleAdapter(player -> {
+            // CLICK EN JUGADOR → asignar capitán
+            currentCaptainId = player.getId();
+            CaptainManager.setCaptain(this, teamId, currentCaptainId);
+            adapter.setCaptainId(currentCaptainId);
+            recalcTotals();
+        });
         rv.setAdapter(adapter);
 
-        // FAB sin lógica real (placeholder).
-        findViewById(R.id.fab_add_player)
-                .setOnClickListener(v -> Snackbar.make(v, "Funcionalidad en desarrollo", Snackbar.LENGTH_SHORT).show());
+        vm = new ViewModelProvider(this).get(FootballViewModel.class);
+        vm.getSquad().observe(this, players -> {
+            currentSquad.clear();
+            if (players != null) currentSquad.addAll(players);
+            adapter.submit(players);
+
+            // Cargar capitán guardado
+            currentCaptainId = CaptainManager.getCaptain(this, teamId);
+            adapter.setCaptainId(currentCaptainId);
+            recalcTotals();
+        });
+
+        teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, -1);
+        if (teamId != -1) {
+            vm.loadSquad(teamId);
+        }
+
+        btnTransfers.setOnClickListener(v ->
+                startActivity(new Intent(this, TransferMarketActivity.class))
+        );
+
+        // btnCaptain se puede mantener para otra acción (p.ej. abrir mercado o mostrar quién es el capitán)
+        btnCaptain.setOnClickListener(v -> {
+            // opcional: mostrar un dialog con el capitán actual
+        });
     }
 
-    // Lleno la lista con jugadores de ejemplo para la demo.
-    private void loadMockPlayers() {
-        players.clear();
-        players.add(new PlayerLite("J. Oblak", "GK", 10));
-        players.add(new PlayerLite("R. Araujo", "DEF", 12));
-        players.add(new PlayerLite("D. Carvajal", "DEF", 11));
-        players.add(new PlayerLite("F. Valverde", "MID", 15));
-        players.add(new PlayerLite("Pedri", "MID", 14));
-        players.add(new PlayerLite("V. Junior", "FWD", 20));
-        players.add(new PlayerLite("R. Lewandowski", "FWD", 22));
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Back de la toolbar.
-        if (item.getItemId() == android.R.id.home) { finish(); return true; }
-        return super.onOptionsItemSelected(item);
+    private void recalcTotals() {
+        int total = 0;
+        for (PlayerAPI p : currentSquad) {
+            int pts = p.getPoints(); // asegúrate de que PlayerAPI tiene getPoints()
+            if (p.getId() == currentCaptainId) pts *= 2;
+            total += pts;
+        }
+        if (tvPoints != null) {
+            tvPoints.setText(String.valueOf(total));
+        }
     }
 }

@@ -8,30 +8,58 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.housemanager.api.models.PlayerAPI;
+
+import java.util.ArrayList;
 import java.util.List;
 
-// Muestra nombre, posición y precio. Sin iconos para no depender de drawables.
-public class PlayersAdapter extends RecyclerView.Adapter<PlayersAdapter.PlayerVH> {
+public class PlayersAdapter extends RecyclerView.Adapter<PlayersAdapter.VH> {
 
-    private final List<MyTeamActivity.PlayerLite> players;
+    public interface OnPlayerClick {
+        void onPlayerClick(PlayerAPI player);
+    }
 
-    public PlayersAdapter(List<MyTeamActivity.PlayerLite> players) {
-        this.players = players;
+    private final List<PlayerAPI> players = new ArrayList<>();
+    private final OnPlayerClick listener;
+    private int captainId = -1;
+
+    public PlayersAdapter(OnPlayerClick listener) {
+        this.listener = listener;
+    }
+
+    public void submit(List<PlayerAPI> data) {
+        players.clear();
+        if (data != null) players.addAll(data);
+        notifyDataSetChanged();
+    }
+
+    public void setCaptainId(int captainId) {
+        this.captainId = captainId;
+        notifyDataSetChanged();
     }
 
     @NonNull
     @Override
-    public PlayerVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_player, parent, false);
-        return new PlayerVH(v);
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_player_simple, parent, false);
+        return new VH(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull PlayerVH h, int position) {
-        MyTeamActivity.PlayerLite p = players.get(position);
-        h.tvName.setText(p.getName());
-        h.tvPosition.setText(p.getPosition());
-        h.tvPrice.setText(p.getPrice() + "M €");
+    public void onBindViewHolder(@NonNull VH h, int position) {
+        PlayerAPI p = players.get(position);
+
+        String name = p.getName() != null ? p.getName() : "-";
+        if (p.getId() == captainId) name = "★ " + name; // opcional para marcar capitán
+        h.tvName.setText(name);
+
+        String pos = p.getPosition() != null ? p.getPosition() : "–";
+        h.tvPos.setText(pos);
+
+        h.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onPlayerClick(p);
+        });
     }
 
     @Override
@@ -39,13 +67,12 @@ public class PlayersAdapter extends RecyclerView.Adapter<PlayersAdapter.PlayerVH
         return players.size();
     }
 
-    static class PlayerVH extends RecyclerView.ViewHolder {
-        TextView tvName, tvPosition, tvPrice;
-        PlayerVH(@NonNull View itemView) {
+    static class VH extends RecyclerView.ViewHolder {
+        TextView tvName, tvPos;
+        VH(@NonNull View itemView) {
             super(itemView);
-            tvName = itemView.findViewById(R.id.tv_player_name);
-            tvPosition = itemView.findViewById(R.id.tv_player_position);
-            tvPrice = itemView.findViewById(R.id.tv_player_price);
+            tvName = itemView.findViewById(R.id.tv_name);
+            tvPos  = itemView.findViewById(R.id.tv_pos);
         }
     }
 }

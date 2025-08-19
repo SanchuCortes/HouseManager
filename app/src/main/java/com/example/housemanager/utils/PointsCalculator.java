@@ -1,4 +1,4 @@
-package com.yourpackage.housemanager.utils;
+package com.example.housemanager.utils;
 
 import android.util.Log;
 import java.util.List;
