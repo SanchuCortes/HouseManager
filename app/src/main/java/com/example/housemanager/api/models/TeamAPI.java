@@ -11,11 +11,30 @@ public class TeamAPI {
     @SerializedName("name")
     private String name;
 
-    // URL del escudo (png/svg) según football-data v4
+    @SerializedName("shortName")
+    private String shortName;
+
+    @SerializedName("tla")
+    private String tla;
+
     @SerializedName("crest")
     private String crest;
 
-    // Algunas respuestas traen la plantilla como "squad"
+    @SerializedName("address")
+    private String address;
+
+    @SerializedName("website")
+    private String website;
+
+    @SerializedName("founded")
+    private Integer founded;
+
+    @SerializedName("clubColors")
+    private String clubColors;
+
+    @SerializedName("venue")
+    private String venue;
+
     @SerializedName("squad")
     private List<PlayerAPI> squad;
 
@@ -27,17 +46,55 @@ public class TeamAPI {
         this.crest = crest;
     }
 
+    // Getters
     public int getId() {
         return id;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    public String getTla() {
+        return tla;
+    }
+
+    public String getCrest() {
+        return crest;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public Integer getFounded() {
+        return founded;
+    }
+
+    public String getClubColors() {
+        return clubColors;
+    }
+
+    public String getVenue() {
+        return venue;
+    }
+
+    public List<PlayerAPI> getSquad() {
+        return squad;
+    }
+
+    // Setters
     public TeamAPI setId(int id) {
         this.id = id;
         return this;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public TeamAPI setName(String name) {
@@ -45,8 +102,14 @@ public class TeamAPI {
         return this;
     }
 
-    public String getCrest() {
-        return crest;
+    public TeamAPI setShortName(String shortName) {
+        this.shortName = shortName;
+        return this;
+    }
+
+    public TeamAPI setTla(String tla) {
+        this.tla = tla;
+        return this;
     }
 
     public TeamAPI setCrest(String crest) {
@@ -54,12 +117,43 @@ public class TeamAPI {
         return this;
     }
 
-    public List<PlayerAPI> getSquad() {
-        return squad;
+    public TeamAPI setAddress(String address) {
+        this.address = address;
+        return this;
+    }
+
+    public TeamAPI setWebsite(String website) {
+        this.website = website;
+        return this;
+    }
+
+    public TeamAPI setFounded(Integer founded) {
+        this.founded = founded;
+        return this;
+    }
+
+    public TeamAPI setClubColors(String clubColors) {
+        this.clubColors = clubColors;
+        return this;
+    }
+
+    public TeamAPI setVenue(String venue) {
+        this.venue = venue;
+        return this;
     }
 
     public TeamAPI setSquad(List<PlayerAPI> squad) {
         this.squad = squad;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "TeamAPI{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", shortName='" + shortName + '\'' +
+                ", crest='" + crest + '\'' +
+                '}';
     }
 }

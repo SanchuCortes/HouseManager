@@ -14,7 +14,7 @@ import java.util.List;
 @Dao
 public interface TeamDao {
 
-    // ===== INSERTS Y UPDATES =====
+    // Operaciones básicas de guardado
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTeam(TeamEntity team);
 
@@ -30,37 +30,36 @@ public interface TeamDao {
     @Query("DELETE FROM teams")
     void deleteAllTeams();
 
-    // ===== CONSULTAS BÁSICAS =====
+    // Consultas principales - solo entities
     @Query("SELECT * FROM teams ORDER BY name ASC")
     LiveData<List<TeamEntity>> getAllTeamEntities();
 
     @Query("SELECT * FROM teams WHERE teamId = :teamId")
     LiveData<TeamEntity> getTeamById(int teamId);
 
+    // Búsquedas básicas
     @Query("SELECT * FROM teams WHERE name LIKE '%' || :searchTerm || '%' ORDER BY name ASC")
     LiveData<List<TeamEntity>> searchTeamsByName(String searchTerm);
 
-    // ===== CONSULTAS ÚTILES =====
+    // Contadores
     @Query("SELECT COUNT(*) FROM teams")
     LiveData<Integer> getTeamsCount();
 
+    @Query("SELECT COUNT(*) FROM teams")
+    int getTeamsCountSync();
+
+    // Para el repositorio cuando necesita datos síncronos
+    @Query("SELECT * FROM teams")
+    List<TeamEntity> getAllTeamsSync();
+
+    // Consultas útiles para spinners
     @Query("SELECT name FROM teams ORDER BY name ASC")
     LiveData<List<String>> getAllTeamNames();
 
-    @Query("SELECT teamId, name FROM teams ORDER BY name ASC")
-    LiveData<List<TeamEntity>> getTeamsForSpinner();
-
-    // ===== CONSULTAS PARA VALIDACIÓN =====
+    // Validaciones
     @Query("SELECT EXISTS(SELECT 1 FROM teams WHERE teamId = :teamId)")
     LiveData<Boolean> teamExists(int teamId);
 
     @Query("SELECT EXISTS(SELECT 1 FROM teams WHERE name = :teamName)")
     LiveData<Boolean> teamNameExists(String teamName);
-
-    // ===== PARA TESTING =====
-    @Query("SELECT COUNT(*) FROM teams")
-    int getTeamsCountSync();
-
-    @Query("SELECT * FROM teams")
-    List<TeamEntity> getAllTeamsSync();
 }

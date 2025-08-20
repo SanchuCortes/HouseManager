@@ -32,56 +32,58 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Repositorio principal para manejar datos de football.
- * Se encarga de sincronizar datos de la API y mantener cache local.
+ * Repositorio central para manejar todos los datos de football
+ * Se encarga de sincronizar con la API y mantener cache local
  */
 public class FootballRepository {
 
     private static final String TAG = "FootballRepository";
 
-    // Configuración para el cache de sincronización
+    // Configuración del cache
     private static final String PREFS_NAME = "football_sync_prefs";
     private static final String PREF_LAST_SYNC = "last_full_sync";
     private static final String PREF_TEAMS_SYNCED = "teams_synced";
     private static final String PREF_PLAYERS_SYNCED = "players_synced";
     private static final long SYNC_INTERVAL_DAYS = 7; // Resincronizar cada semana
 
-    // Callback para informar del progreso de sincronización
+    // Callback para informar del progreso
     public interface SyncCallback {
         void onSuccess();
         void onError(Throwable t);
-        void onProgress(String message, int current, int total);
+        default void onProgress(String message, int current, int total) {
+            // Método opcional para progreso
+        }
     }
 
     private static FootballRepository instance;
 
-    // DAOs para acceso a base de datos
+    // DAOs para acceso a datos
     private final PlayerDao playerDao;
     private final TeamDao teamDao;
     private final FootballApiService apiService;
     private final ExecutorService executor;
     private final SharedPreferences syncPrefs;
 
-    // LiveData para comunicar el estado a la UI
+    // LiveData para comunicar estado a la UI
     private final MutableLiveData<Boolean> isSyncing = new MutableLiveData<>(false);
     private final MutableLiveData<String> syncStatus = new MutableLiveData<>("");
 
     private FootballRepository(Context context) {
         Log.d(TAG, "Inicializando FootballRepository");
 
-        // Configurar base de datos Room
+        // Configurar base de datos
         HouseManagerDatabase db = HouseManagerDatabase.getInstance(context);
         playerDao = db.playerDao();
         teamDao = db.teamDao();
 
-        // Configurar cliente API
+        // Configurar API
         apiService = ApiClient.getClient().create(FootballApiService.class);
         executor = Executors.newFixedThreadPool(3);
 
-        // Configurar SharedPreferences para control de cache
+        // SharedPreferences para control de cache
         syncPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
-        Log.d(TAG, "FootballRepository inicializado correctamente");
+        Log.d(TAG, "FootballRepository listo");
     }
 
     public static synchronized FootballRepository getInstance(Context context) {
@@ -91,27 +93,28 @@ public class FootballRepository {
         return instance;
     }
 
-    // ====== MÉTODOS PÚBLICOS PARA OBTENER DATOS ======
+    // Métodos principales para obtener datos
 
     /**
-     * Obtiene todos los equipos como objetos Team para el mercado
+     * Devuelve todos los equipos para usar en el mercado de fichajes
      */
     public LiveData<List<Team>> getAllTeams() {
         return Transformations.map(teamDao.getAllTeamEntities(), this::convertTeamEntitiesToMarketTeams);
     }
 
     /**
-     * Obtiene todos los jugadores como objetos Player para el mercado
+     * Devuelve todos los jugadores para el mercado
      */
     public LiveData<List<Player>> getAllPlayers() {
         return Transformations.map(playerDao.getAllPlayerEntities(), this::convertPlayerEntitiesToMarketPlayers);
     }
 
     /**
-     * Obtiene la plantilla de un equipo específico como PlayerAPI para MyTeam
+     * Obtiene la plantilla de un equipo específico
+     * Devuelve entities que luego el ViewModel convierte a PlayerAPI
      */
-    public LiveData<List<PlayerAPI>> getSquadApiByTeam(int teamId) {
-        return playerDao.getSquadApiByTeam(teamId);
+    public LiveData<List<PlayerEntity>> getSquadEntitiesByTeam(int teamId) {
+        return playerDao.getSquadEntitiesByTeam(teamId);
     }
 
     /**
@@ -125,27 +128,26 @@ public class FootballRepository {
     }
 
     /**
-     * Obtiene el número de jugadores disponibles en el mercado
+     * Cuenta los jugadores disponibles en el mercado
      */
     public LiveData<Integer> getAvailablePlayersCount() {
         return playerDao.getAvailablePlayersCount();
     }
 
-    // ====== SINCRONIZACIÓN PRINCIPAL ======
+    // Sincronización principal
 
     /**
-     * Método principal de sincronización. Decide automáticamente si usar cache o API.
+     * Método principal de sincronización. Decide automáticamente qué hacer.
      */
     public void syncLaLigaTeams(@Nullable SyncCallback callback) {
-        Log.d(TAG, "Iniciando proceso de sincronización de LaLiga");
+        Log.d(TAG, "Iniciando proceso de sincronización");
         isSyncing.setValue(true);
         syncStatus.setValue("Verificando datos existentes...");
 
         executor.execute(() -> {
             try {
-                // Primero decidimos qué estrategia de sincronización usar
                 SyncDecision decision = decideSyncStrategy();
-                Log.d(TAG, "Estrategia seleccionada: " + decision.strategy + " - " + decision.reason);
+                Log.d(TAG, "Estrategia: " + decision.strategy + " - " + decision.reason);
 
                 switch (decision.strategy) {
                     case USE_CACHE:
@@ -166,14 +168,14 @@ public class FootballRepository {
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, "Error durante la sincronización", e);
+                Log.e(TAG, "Error durante sincronización", e);
                 handleSyncError(e, callback);
             }
         });
     }
 
     /**
-     * Analiza el estado actual y decide qué tipo de sincronización hacer
+     * Analiza el estado actual y decide qué hacer
      */
     private SyncDecision decideSyncStrategy() {
         int existingTeams = teamDao.getTeamsCountSync();
@@ -182,91 +184,81 @@ public class FootballRepository {
         long daysSinceLastSync = (System.currentTimeMillis() - lastSync) / (1000 * 60 * 60 * 24);
 
         Log.d(TAG, "Estado actual - Equipos: " + existingTeams + ", Jugadores: " + existingPlayers);
-        Log.d(TAG, "Última sincronización hace " + daysSinceLastSync + " días");
+        Log.d(TAG, "Última sync hace " + daysSinceLastSync + " días");
 
         SyncDecision decision = new SyncDecision();
 
         if (existingTeams == 0 && existingPlayers == 0) {
-            // Primera vez que se abre la app
+            // Primera vez
             decision.strategy = SyncStrategy.FULL_SYNC;
             decision.reason = "Primera sincronización completa";
-            Log.d(TAG, "Es la primera vez, necesitamos sincronización completa");
 
         } else if (daysSinceLastSync >= SYNC_INTERVAL_DAYS) {
-            // Los datos son muy antiguos
+            // Datos antiguos
             decision.strategy = SyncStrategy.FULL_SYNC;
-            decision.reason = "Datos antiguos, necesitan actualización";
-            Log.d(TAG, "Los datos son antiguos, resincronizando");
+            decision.reason = "Datos antiguos, actualizando";
 
         } else if (existingTeams > 0 && existingPlayers < (existingTeams * 15)) {
-            // Tenemos equipos pero faltan muchos jugadores
+            // Faltan jugadores
             decision.strategy = SyncStrategy.PARTIAL_SYNC;
-            decision.reason = "Faltan jugadores, completando datos";
+            decision.reason = "Faltan jugadores, completando";
             decision.missingPlayers = true;
-            Log.d(TAG, "Los equipos están pero faltan jugadores");
 
         } else if (existingTeams > 0 && existingPlayers > 0) {
-            // Tenemos datos recientes y completos
+            // Datos válidos
             decision.strategy = SyncStrategy.USE_CACHE;
             decision.reason = "Datos válidos en cache";
-            Log.d(TAG, "Los datos en cache son válidos, no necesitamos sincronizar");
 
         } else {
-            // Algo raro pasó, mejor usar datos mock
+            // Algo raro, usar mock
             decision.strategy = SyncStrategy.MOCK_FALLBACK;
-            decision.reason = "Estado inconsistente, usando datos mock";
-            Log.w(TAG, "Estado de datos inconsistente, usando fallback");
+            decision.reason = "Estado inconsistente, usando mock";
         }
 
         return decision;
     }
 
     /**
-     * Usa los datos que ya tenemos en cache
+     * Usa los datos que ya tenemos
      */
     private void useCachedData(SyncCallback callback) {
-        Log.d(TAG, "Usando datos del cache local");
-        syncStatus.postValue("Cargando datos desde cache...");
+        Log.d(TAG, "Usando datos del cache");
+        syncStatus.postValue("Cargando desde cache...");
 
-        // Pausa pequeña para que el usuario vea el mensaje
         try {
-            Thread.sleep(800);
+            Thread.sleep(800); // Pausa para que se vea el mensaje
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
-        syncStatus.postValue("Datos cargados correctamente");
+        syncStatus.postValue("Datos cargados");
         isSyncing.postValue(false);
 
         if (callback != null) {
             callback.onSuccess();
         }
-
-        Log.d(TAG, "Cache cargado exitosamente");
     }
 
     /**
-     * Realiza una sincronización completa desde la API
+     * Sincronización completa desde la API
      */
     private void performFullSync(SyncCallback callback) {
-        Log.d(TAG, "Iniciando sincronización completa desde la API");
+        Log.d(TAG, "Sincronización completa desde API");
         syncStatus.postValue("Conectando con football-data.org...");
 
-        // Primero obtenemos la lista de equipos
+        // Obtener equipos de LaLiga
         apiService.getLaLigaTeams().enqueue(new Callback<TeamsResponse>() {
             @Override
             public void onResponse(Call<TeamsResponse> call, Response<TeamsResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<TeamAPI> apiTeams = response.body().getTeams();
-                    Log.d(TAG, "Recibidos " + apiTeams.size() + " equipos de la API");
+                    Log.d(TAG, "Recibidos " + apiTeams.size() + " equipos");
 
                     executor.execute(() -> {
                         try {
-                            // Guardar los equipos en la base de datos
                             syncStatus.postValue("Guardando equipos...");
                             saveTeamsToDatabase(apiTeams);
 
-                            // Ahora sincronizar los jugadores de cada equipo
                             syncStatus.postValue("Obteniendo jugadores...");
                             syncAllPlayersFromAPI(apiTeams, callback);
 
@@ -276,25 +268,24 @@ public class FootballRepository {
                         }
                     });
                 } else {
-                    Log.e(TAG, "Error en la API de equipos, código: " + response.code());
-                    // Si falla la API, usamos datos mock
+                    Log.e(TAG, "Error en API, código: " + response.code());
                     generateMockDataAsFallback(callback);
                 }
             }
 
             @Override
             public void onFailure(Call<TeamsResponse> call, Throwable t) {
-                Log.e(TAG, "Fallo de conexión obteniendo equipos", t);
+                Log.e(TAG, "Fallo de conexión", t);
                 generateMockDataAsFallback(callback);
             }
         });
     }
 
     /**
-     * Obtiene los jugadores de todos los equipos desde la API
+     * Obtiene jugadores de todos los equipos
      */
     private void syncAllPlayersFromAPI(List<TeamAPI> teams, SyncCallback callback) {
-        Log.d(TAG, "Empezando a sincronizar jugadores de " + teams.size() + " equipos");
+        Log.d(TAG, "Sincronizando jugadores de " + teams.size() + " equipos");
 
         executor.execute(() -> {
             List<PlayerEntity> allPlayers = new ArrayList<>();
@@ -307,111 +298,94 @@ public class FootballRepository {
 
                 // Esperar entre llamadas para no saturar la API
                 if (i > 0) {
-                    Log.d(TAG, "Esperando 7 segundos antes de la siguiente llamada...");
                     try {
                         Thread.sleep(7000); // 7 segundos entre llamadas
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        Log.w(TAG, "Sincronización interrumpida por el usuario");
                         break;
                     }
                 }
 
-                // Actualizar el estado en la UI
                 String statusMessage = "Obteniendo jugadores de " + team.getName() + " (" + teamIndex + "/" + totalTeams + ")";
                 syncStatus.postValue(statusMessage);
-                Log.d(TAG, statusMessage);
 
-                // Informar del progreso al callback
                 if (callback != null) {
                     runOnMainThread(() -> callback.onProgress("Sincronizando " + team.getName(), teamIndex, totalTeams));
                 }
 
                 try {
-                    // Hacer la llamada a la API para obtener los jugadores del equipo
                     Response<TeamAPI> response = apiService.getTeamDetails(team.getId()).execute();
 
                     if (response.isSuccessful() && response.body() != null) {
                         TeamAPI teamWithPlayers = response.body();
 
                         if (teamWithPlayers.getSquad() != null && !teamWithPlayers.getSquad().isEmpty()) {
-                            // Convertir los jugadores de la API a entidades de base de datos
                             List<PlayerEntity> teamPlayers = convertApiPlayersToEntities(
                                     teamWithPlayers.getSquad(), team);
                             allPlayers.addAll(teamPlayers);
                             successfulTeams++;
 
-                            Log.d(TAG, "Equipo " + team.getName() + " sincronizado: " + teamPlayers.size() + " jugadores");
-                        } else {
-                            Log.w(TAG, "El equipo " + team.getName() + " no tiene jugadores en la respuesta");
+                            Log.d(TAG, "Equipo " + team.getName() + " OK: " + teamPlayers.size() + " jugadores");
                         }
                     } else {
-                        Log.e(TAG, "Error obteniendo jugadores de " + team.getName() + ", código: " + response.code());
+                        Log.e(TAG, "Error con " + team.getName() + ", código: " + response.code());
                     }
 
                 } catch (Exception e) {
-                    Log.e(TAG, "Error sincronizando equipo " + team.getName(), e);
+                    Log.e(TAG, "Error sincronizando " + team.getName(), e);
                 }
             }
 
-            Log.d(TAG, "Sincronización terminada: " + successfulTeams + "/" + teams.size() + " equipos exitosos");
-            Log.d(TAG, "Total de jugadores obtenidos: " + allPlayers.size());
+            Log.d(TAG, "Sync terminada: " + successfulTeams + "/" + teams.size() + " equipos");
+            Log.d(TAG, "Total jugadores: " + allPlayers.size());
 
-            // Finalizar la sincronización guardando todos los datos
             finalizeSyncWithRealData(allPlayers, callback);
         });
     }
 
     /**
-     * Guarda todos los jugadores y marca la sincronización como completada
+     * Guarda todos los jugadores y finaliza
      */
     private void finalizeSyncWithRealData(List<PlayerEntity> allPlayers, SyncCallback callback) {
         executor.execute(() -> {
             try {
-                syncStatus.postValue("Guardando " + allPlayers.size() + " jugadores en la base de datos...");
-                Log.d(TAG, "Guardando " + allPlayers.size() + " jugadores en Room");
+                syncStatus.postValue("Guardando " + allPlayers.size() + " jugadores...");
 
-                // Si obtuvimos pocos jugadores reales, completamos con datos mock
+                // Si obtuvimos pocos jugadores, completar con mock
                 if (allPlayers.size() < 100) {
-                    Log.w(TAG, "Solo obtuvimos " + allPlayers.size() + " jugadores reales, completando con mock");
+                    Log.w(TAG, "Solo " + allPlayers.size() + " jugadores reales, completando con mock");
                     List<TeamEntity> teams = teamDao.getAllTeamsSync();
                     List<PlayerEntity> mockPlayers = generateMockPlayersForMissingTeams(teams);
                     allPlayers.addAll(mockPlayers);
-                    Log.d(TAG, "Agregados " + mockPlayers.size() + " jugadores mock adicionales");
                 }
 
-                // Limpiar datos antiguos y guardar los nuevos
+                // Limpiar y guardar
                 playerDao.deleteAllPlayers();
                 playerDao.insertPlayers(allPlayers);
 
-                // Marcar la sincronización como completada
                 markSyncCompleted(allPlayers.size());
 
-                syncStatus.postValue("Sincronización completada exitosamente");
+                syncStatus.postValue("Sincronización completada");
                 isSyncing.postValue(false);
-
-                Log.d(TAG, "Sincronización completa exitosa: " + allPlayers.size() + " jugadores guardados");
 
                 if (callback != null) {
                     callback.onSuccess();
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, "Error finalizando la sincronización", e);
                 handleSyncError(e, callback);
             }
         });
     }
 
     /**
-     * Realiza una sincronización parcial (solo lo que falta)
+     * Sincronización parcial (solo lo que falta)
      */
     private void performPartialSync(SyncDecision decision, SyncCallback callback) {
-        Log.d(TAG, "Realizando sincronización parcial: " + decision.reason);
-        syncStatus.postValue("Completando datos faltantes...");
+        Log.d(TAG, "Sincronización parcial: " + decision.reason);
+        syncStatus.postValue("Completando datos...");
 
         if (decision.missingPlayers) {
-            Log.d(TAG, "Generando jugadores faltantes");
             executor.execute(() -> {
                 try {
                     List<TeamEntity> teams = teamDao.getAllTeamsSync();
@@ -420,10 +394,8 @@ public class FootballRepository {
 
                     markSyncCompleted(mockPlayers.size());
 
-                    syncStatus.postValue("Datos completados correctamente");
+                    syncStatus.postValue("Datos completados");
                     isSyncing.postValue(false);
-
-                    Log.d(TAG, "Sincronización parcial completada: " + mockPlayers.size() + " jugadores agregados");
 
                     if (callback != null) {
                         callback.onSuccess();
@@ -436,50 +408,44 @@ public class FootballRepository {
     }
 
     /**
-     * Genera datos mock como fallback cuando falla la API
+     * Genera datos mock cuando falla la API
      */
     private void generateMockDataAsFallback(SyncCallback callback) {
-        Log.d(TAG, "API no disponible, generando datos mock como alternativa");
-        syncStatus.postValue("Generando datos de demostración...");
+        Log.d(TAG, "API no disponible, generando datos mock");
+        syncStatus.postValue("Generando datos de prueba...");
 
         executor.execute(() -> {
             try {
-                // Limpiar datos existentes
+                // Limpiar todo
                 teamDao.deleteAllTeams();
                 playerDao.deleteAllPlayers();
 
-                // Generar equipos y jugadores mock
+                // Generar datos mock
                 List<TeamEntity> mockTeams = createMockTeams();
                 teamDao.insertTeams(mockTeams);
-                Log.d(TAG, "Generados " + mockTeams.size() + " equipos mock");
 
                 List<PlayerEntity> mockPlayers = createMockPlayers(mockTeams);
                 playerDao.insertPlayers(mockPlayers);
-                Log.d(TAG, "Generados " + mockPlayers.size() + " jugadores mock");
 
-                // Marcar como sincronizado aunque sean datos mock
                 markSyncCompleted(mockPlayers.size());
 
-                syncStatus.postValue("Datos de demostración listos");
+                syncStatus.postValue("Datos de prueba listos");
                 isSyncing.postValue(false);
-
-                Log.d(TAG, "Datos mock generados completamente");
 
                 if (callback != null) {
                     callback.onSuccess();
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, "Error generando datos mock", e);
                 handleSyncError(e, callback);
             }
         });
     }
 
-    // ====== MÉTODOS AUXILIARES ======
+    // Métodos auxiliares
 
     /**
-     * Guarda los equipos de la API en la base de datos
+     * Guarda equipos de la API en la base de datos
      */
     private void saveTeamsToDatabase(List<TeamAPI> apiTeams) {
         List<TeamEntity> entities = new ArrayList<>();
@@ -492,15 +458,14 @@ public class FootballRepository {
             entities.add(entity);
         }
 
-        // Limpiar equipos antiguos y guardar los nuevos
         teamDao.deleteAllTeams();
         teamDao.insertTeams(entities);
 
-        Log.d(TAG, "Guardados " + entities.size() + " equipos en la base de datos");
+        Log.d(TAG, "Guardados " + entities.size() + " equipos");
     }
 
     /**
-     * Convierte jugadores de la API a entidades de base de datos
+     * Convierte jugadores de API a entities
      */
     private List<PlayerEntity> convertApiPlayersToEntities(List<PlayerAPI> apiPlayers, TeamAPI team) {
         List<PlayerEntity> entities = new ArrayList<>();
@@ -524,7 +489,7 @@ public class FootballRepository {
     }
 
     /**
-     * Traduce las posiciones del inglés al español
+     * Traduce posiciones del inglés al español
      */
     private String translatePositionToSpanish(String englishPosition) {
         if (englishPosition == null) return "Medio";
@@ -540,47 +505,47 @@ public class FootballRepository {
             return "Delantero";
         }
 
-        return "Medio"; // Por defecto si no reconocemos la posición
+        return "Medio";
     }
 
     /**
-     * Calcula un precio realista según la posición del jugador
+     * Calcula precio según posición
      */
     private int calculatePlayerPrice(String position) {
         switch (position) {
             case "Portero":
-                return (int) (Math.random() * 10) + 8;   // Entre 8 y 18 millones
+                return (int) (Math.random() * 10) + 8;   // 8-18M
             case "Defensa":
-                return (int) (Math.random() * 15) + 5;   // Entre 5 y 20 millones
+                return (int) (Math.random() * 15) + 5;   // 5-20M
             case "Medio":
-                return (int) (Math.random() * 20) + 8;   // Entre 8 y 28 millones
+                return (int) (Math.random() * 20) + 8;   // 8-28M
             case "Delantero":
-                return (int) (Math.random() * 25) + 10;  // Entre 10 y 35 millones
+                return (int) (Math.random() * 25) + 10;  // 10-35M
             default:
-                return 12; // Precio por defecto
+                return 12;
         }
     }
 
     /**
-     * Genera puntos aleatorios realistas según la posición
+     * Genera puntos según posición
      */
     private int generateRandomPoints(String position) {
         switch (position) {
             case "Portero":
-                return (int) (Math.random() * 50) + 30;  // Entre 30 y 80 puntos
+                return (int) (Math.random() * 50) + 30;  // 30-80 pts
             case "Defensa":
-                return (int) (Math.random() * 60) + 20;  // Entre 20 y 80 puntos
+                return (int) (Math.random() * 60) + 20;  // 20-80 pts
             case "Medio":
-                return (int) (Math.random() * 80) + 30;  // Entre 30 y 110 puntos
+                return (int) (Math.random() * 80) + 30;  // 30-110 pts
             case "Delantero":
-                return (int) (Math.random() * 100) + 40; // Entre 40 y 140 puntos
+                return (int) (Math.random() * 100) + 40; // 40-140 pts
             default:
-                return 50; // Puntos por defecto
+                return 50;
         }
     }
 
     /**
-     * Marca la sincronización como completada en SharedPreferences
+     * Marca la sync como completada
      */
     private void markSyncCompleted(int playersCount) {
         syncPrefs.edit()
@@ -589,14 +554,14 @@ public class FootballRepository {
                 .putInt(PREF_PLAYERS_SYNCED, playersCount)
                 .apply();
 
-        Log.d(TAG, "Sincronización marcada como completada con " + playersCount + " jugadores");
+        Log.d(TAG, "Sync completada con " + playersCount + " jugadores");
     }
 
     /**
-     * Maneja errores durante la sincronización
+     * Maneja errores
      */
     private void handleSyncError(Throwable error, SyncCallback callback) {
-        Log.e(TAG, "Error durante la sincronización", error);
+        Log.e(TAG, "Error en sync", error);
         syncStatus.postValue("Error: " + error.getMessage());
         isSyncing.postValue(false);
 
@@ -606,14 +571,14 @@ public class FootballRepository {
     }
 
     /**
-     * Ejecuta código en el hilo principal de la UI
+     * Ejecuta en hilo principal
      */
     private void runOnMainThread(Runnable action) {
         android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
         mainHandler.post(action);
     }
 
-    // ====== CONVERSORES PARA LA UI ======
+    // Conversores para la UI
 
     /**
      * Convierte TeamEntity a Team para el mercado
@@ -655,7 +620,7 @@ public class FootballRepository {
         return players;
     }
 
-    // ====== DATOS MOCK PARA FALLBACK ======
+    // Datos mock para fallback
 
     /**
      * Crea equipos mock de LaLiga
@@ -686,7 +651,6 @@ public class FootballRepository {
      * Crea jugadores mock para todos los equipos
      */
     private List<PlayerEntity> createMockPlayers(List<TeamEntity> teams) {
-        // Nombres de jugadores por posición
         String[] porteros = {"Ter Stegen", "Courtois", "Oblak", "Unai Simón", "Bono", "Dmitrovic", "Remiro"};
         String[] defensas = {"Piqué", "Ramos", "Giménez", "Koundé", "Alaba", "Militão", "Hermoso", "Araujo", "Pau Torres"};
         String[] medios = {"Busquets", "Modric", "Koke", "Pedri", "Gavi", "Casemiro", "De Jong", "Camavinga", "Canales"};
@@ -696,7 +660,7 @@ public class FootballRepository {
         int playerId = 1;
 
         for (TeamEntity team : teams) {
-            // Generar plantilla completa: 2 porteros, 8 defensas, 8 medios, 6 delanteros
+            // Plantilla completa: 2 porteros, 8 defensas, 8 medios, 6 delanteros
 
             // Porteros
             for (int i = 0; i < 2; i++) {
@@ -732,7 +696,7 @@ public class FootballRepository {
     private PlayerEntity createMockPlayer(int playerId, TeamEntity team, String position, String baseName) {
         PlayerEntity player = new PlayerEntity();
         player.setPlayerId(playerId);
-        player.setName(baseName + " " + playerId); // Agregar número para hacer nombres únicos
+        player.setName(baseName + " " + playerId);
         player.setTeamId(team.getTeamId());
         player.setTeamName(team.getName());
         player.setPosition(position);
@@ -744,31 +708,25 @@ public class FootballRepository {
     }
 
     /**
-     * Genera jugadores mock para equipos que no tienen jugadores completos
+     * Genera jugadores mock para equipos faltantes
      */
     private List<PlayerEntity> generateMockPlayersForMissingTeams(List<TeamEntity> teams) {
-        Log.d(TAG, "Generando jugadores mock para completar equipos faltantes");
         return createMockPlayers(teams);
     }
 
-    // ====== MÉTODOS PARA FICHAJES ======
+    // Métodos para fichajes
 
     /**
-     * Marca un jugador como comprado (no disponible en el mercado)
+     * Marca un jugador como comprado
      */
     public void buyPlayer(int playerId, @Nullable SyncCallback callback) {
-        Log.d(TAG, "Comprando jugador con ID: " + playerId);
-
         executor.execute(() -> {
             try {
                 playerDao.markPlayerAsUnavailable(playerId);
-                Log.d(TAG, "Jugador " + playerId + " marcado como no disponible");
-
                 if (callback != null) {
                     callback.onSuccess();
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error comprando jugador " + playerId, e);
                 if (callback != null) {
                     callback.onError(e);
                 }
@@ -777,21 +735,16 @@ public class FootballRepository {
     }
 
     /**
-     * Marca un jugador como vendido (disponible en el mercado de nuevo)
+     * Marca un jugador como vendido
      */
     public void sellPlayer(int playerId, @Nullable SyncCallback callback) {
-        Log.d(TAG, "Vendiendo jugador con ID: " + playerId);
-
         executor.execute(() -> {
             try {
                 playerDao.markPlayerAsAvailable(playerId);
-                Log.d(TAG, "Jugador " + playerId + " marcado como disponible");
-
                 if (callback != null) {
                     callback.onSuccess();
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error vendiendo jugador " + playerId, e);
                 if (callback != null) {
                     callback.onError(e);
                 }
@@ -799,10 +752,10 @@ public class FootballRepository {
         });
     }
 
-    // ====== MÉTODOS ADICIONALES PARA EL MERCADO ======
+    // Métodos adicionales para el mercado
 
     /**
-     * Obtiene jugadores filtrados por posición
+     * Jugadores filtrados por posición
      */
     public LiveData<List<Player>> getPlayersByPosition(String position) {
         return Transformations.map(
@@ -812,7 +765,7 @@ public class FootballRepository {
     }
 
     /**
-     * Obtiene los mejores jugadores por puntos
+     * Los mejores jugadores por puntos
      */
     public LiveData<List<Player>> getTopPlayersByPoints() {
         return Transformations.map(
@@ -822,21 +775,16 @@ public class FootballRepository {
     }
 
     /**
-     * Actualiza el precio de un jugador específico
+     * Actualiza precio de un jugador
      */
     public void updatePlayerPrice(int playerId, int newPrice, @Nullable SyncCallback callback) {
-        Log.d(TAG, "Actualizando precio del jugador " + playerId + " a " + newPrice + "M");
-
         executor.execute(() -> {
             try {
                 playerDao.updatePlayerPrice(playerId, newPrice);
-                Log.d(TAG, "Precio actualizado correctamente");
-
                 if (callback != null) {
                     callback.onSuccess();
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error actualizando precio del jugador " + playerId, e);
                 if (callback != null) {
                     callback.onError(e);
                 }
@@ -845,24 +793,19 @@ public class FootballRepository {
     }
 
     /**
-     * Limpia todos los datos de la base de datos
+     * Limpia todos los datos
      */
     public void clearAllData(@Nullable SyncCallback callback) {
-        Log.d(TAG, "Limpiando todos los datos de la base de datos");
-
         executor.execute(() -> {
             try {
                 playerDao.deleteAllPlayers();
                 teamDao.deleteAllTeams();
                 syncPrefs.edit().clear().apply();
 
-                Log.d(TAG, "Todos los datos limpiados correctamente");
-
                 if (callback != null) {
                     callback.onSuccess();
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error limpiando datos", e);
                 if (callback != null) {
                     callback.onError(e);
                 }
@@ -871,38 +814,28 @@ public class FootballRepository {
     }
 
     /**
-     * Fuerza una nueva sincronización completa
+     * Fuerza nueva sync completa
      */
     public void forceSyncFromAPI(@Nullable SyncCallback callback) {
-        Log.d(TAG, "Forzando sincronización completa desde la API");
         syncPrefs.edit().remove(PREF_LAST_SYNC).apply();
         syncLaLigaTeams(callback);
     }
 
-    // ====== GETTERS PARA LA UI ======
+    // Getters para la UI
 
-    /**
-     * Devuelve si estamos sincronizando en este momento
-     */
     public LiveData<Boolean> getIsSyncing() {
         return isSyncing;
     }
 
-    /**
-     * Devuelve el estado actual de la sincronización
-     */
     public LiveData<String> getSyncStatus() {
         return syncStatus;
     }
 
-    /**
-     * Método de conveniencia para iniciar sincronización sin callback
-     */
     public void loadTeams() {
         syncLaLigaTeams(null);
     }
 
-    // ====== CLASES AUXILIARES ======
+    // Clases auxiliares
 
     private static class SyncDecision {
         SyncStrategy strategy;

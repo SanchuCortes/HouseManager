@@ -15,48 +15,87 @@ import java.util.List;
 
 public class PlayersSimpleAdapter extends RecyclerView.Adapter<PlayersSimpleAdapter.VH> {
 
-    public interface OnPlayerClick { void onPlayerClick(PlayerAPI player); }
+    // Interface para manejar clicks en jugadores
+    public interface OnPlayerClick {
+        void onPlayerClick(PlayerAPI player);
+    }
 
-    private final List<PlayerAPI> data = new ArrayList<>();
+    private final List<PlayerAPI> jugadores = new ArrayList<>();
     private OnPlayerClick listener;
-    private int captainId = -1;
+    private int capitanId = -1; // ID del capitán actual
 
-    public PlayersSimpleAdapter() { this.listener = null; }
-    public PlayersSimpleAdapter(OnPlayerClick listener) { this.listener = listener; }
+    // Constructor sin listener
+    public PlayersSimpleAdapter() {
+        this.listener = null;
+    }
 
-    public void submit(List<PlayerAPI> players) {
-        data.clear();
-        if (players != null) data.addAll(players);
+    // Constructor con listener para clicks
+    public PlayersSimpleAdapter(OnPlayerClick listener) {
+        this.listener = listener;
+    }
+
+    // Actualizar la lista de jugadores
+    public void submit(List<PlayerAPI> nuevosJugadores) {
+        jugadores.clear();
+        if (nuevosJugadores != null) {
+            jugadores.addAll(nuevosJugadores);
+        }
         notifyDataSetChanged();
     }
 
-    public void setCaptainId(int id) { captainId = id; notifyDataSetChanged(); }
+    // Cambiar quién es el capitán
+    public void setCaptainId(int id) {
+        capitanId = id;
+        notifyDataSetChanged();
+    }
 
-    @NonNull @Override
+    @NonNull
+    @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext())
+        View vista = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_player_simple, parent, false);
-        return new VH(v);
+        return new VH(vista);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull VH h, int position) {
-        PlayerAPI p = data.get(position);
-        String name = p.getName() != null ? p.getName() : "-";
-        if (p.getId() == captainId) name = "★ " + name; // marcador opcional
-        h.tvName.setText(name);
-        h.tvPos.setText(p.getPosition() != null ? p.getPosition() : "–");
-        h.itemView.setOnClickListener(v -> { if (listener != null) listener.onPlayerClick(p); });
+    public void onBindViewHolder(@NonNull VH holder, int position) {
+        PlayerAPI jugador = jugadores.get(position);
+
+        // Nombre del jugador
+        String nombre = jugador.getName() != null ? jugador.getName() : "Sin nombre";
+
+        // Si es el capitán, le pongo una estrella
+        if (jugador.getId() == capitanId) {
+            nombre = "⭐ " + nombre;
+        }
+
+        holder.tvNombre.setText(nombre);
+
+        // Posición del jugador
+        String posicion = jugador.getPosition() != null ? jugador.getPosition() : "—";
+        holder.tvPosicion.setText(posicion);
+
+        // Click en el jugador
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onPlayerClick(jugador);
+            }
+        });
     }
 
-    @Override public int getItemCount() { return data.size(); }
+    @Override
+    public int getItemCount() {
+        return jugadores.size();
+    }
 
+    // ViewHolder para cada item
     static class VH extends RecyclerView.ViewHolder {
-        TextView tvName, tvPos;
+        TextView tvNombre, tvPosicion;
+
         VH(@NonNull View itemView) {
             super(itemView);
-            tvName = itemView.findViewById(R.id.tv_name);
-            tvPos  = itemView.findViewById(R.id.tv_pos);
+            tvNombre = itemView.findViewById(R.id.tv_name);
+            tvPosicion = itemView.findViewById(R.id.tv_pos);
         }
     }
 }

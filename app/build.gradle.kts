@@ -37,9 +37,10 @@ android {
         }
     }
 
+    // CAMBIO TEMPORAL: Java 11 para estabilizar Room + DataBinding
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     buildFeatures {

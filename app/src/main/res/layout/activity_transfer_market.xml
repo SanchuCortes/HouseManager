@@ -1,222 +1,218 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@color/background_white"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <data />
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:background="@color/background_white"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:background="@color/primary_blue"
+        android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
+        app:titleTextColor="@color/text_dark"
+        app:navigationIconTint="@color/text_dark" />
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/primary_blue"
-            android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
-            app:titleTextColor="@color/text_dark"
-            app:navigationIconTint="@color/text_dark" />
+    <!-- Buscador -->
+    <EditText
+        android:id="@+id/searchEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Buscar jugador/equipo"
+        android:padding="12dp"
+        android:textColor="@color/text_dark"
+        android:textColorHint="@color/gray_medium"
+        android:background="@color/card_background"
+        android:layout_margin="12dp" />
 
-        <!-- Buscador -->
-        <EditText
-            android:id="@+id/searchEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Buscar jugador/equipo"
-            android:padding="12dp"
-            android:textColor="@color/text_dark"
-            android:textColorHint="@color/gray_medium"
-            android:background="@color/card_background"
-            android:layout_margin="12dp" />
+    <!-- Chips posiciones -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp">
 
-        <!-- Chips posiciones -->
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="8dp">
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipAll"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Todos"
-                app:chipBackgroundColor="@color/card_background"
-                app:chipStrokeColor="@color/secondary_green"
-                app:chipStrokeWidth="1dp"
-                android:textColor="@color/text_dark" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipGoalkeepers"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Porteros"
-                android:layout_marginStart="8dp"
-                app:chipBackgroundColor="@color/card_background"
-                app:chipStrokeColor="@color/secondary_green"
-                app:chipStrokeWidth="1dp"
-                android:textColor="@color/text_dark" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipDefenders"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Defensas"
-                android:layout_marginStart="8dp"
-                app:chipBackgroundColor="@color/card_background"
-                app:chipStrokeColor="@color/secondary_green"
-                app:chipStrokeWidth="1dp"
-                android:textColor="@color/text_dark" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipMidfielders"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Centrocampistas"
-                android:layout_marginStart="8dp"
-                app:chipBackgroundColor="@color/card_background"
-                app:chipStrokeColor="@color/secondary_green"
-                app:chipStrokeWidth="1dp"
-                android:textColor="@color/text_dark" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipForwards"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Delanteros"
-                android:layout_marginStart="8dp"
-                app:chipBackgroundColor="@color/card_background"
-                app:chipStrokeColor="@color/secondary_green"
-                app:chipStrokeWidth="1dp"
-                android:textColor="@color/text_dark" />
-        </LinearLayout>
-
-        <!-- Filtros avanzados -->
-        <LinearLayout
-            android:id="@+id/advancedFiltersLayout"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="8dp">
-
-            <Spinner
-                android:id="@+id/spinnerTeams"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:popupBackground="@color/card_background" />
-
-            <Spinner
-                android:id="@+id/spinnerSort"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:popupBackground="@color/card_background" />
-        </LinearLayout>
-
-        <!-- Acciones -->
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="12dp">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnClearFilters"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="Limpiar"
-                app:strokeColor="@color/secondary_green"
-                app:iconTint="@color/text_dark"
-                android:textColor="@color/text_dark" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnRefreshData"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Actualizar"
-                app:backgroundTint="@color/secondary_green"
-                android:textColor="@color/text_dark" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnToggleFilters"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ocultar Filtros"
-                android:layout_marginStart="8dp"
-                app:backgroundTint="@color/accent_gold"
-                android:textColor="@color/text_dark" />
-        </LinearLayout>
-
-        <!-- Estado / contadores -->
-        <TextView
-            android:id="@+id/textTotalPlayers"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Total: 0 jugadores"
-            android:textColor="@color/gray_medium"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingTop="4dp" />
-
-        <TextView
-            android:id="@+id/textFilteredCount"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Mostrando: 0 jugadores"
-            android:textColor="@color/gray_medium"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="8dp" />
-
-        <!-- Loading -->
-        <ProgressBar
-            android:id="@+id/progressBar"
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipAll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:visibility="gone"
-            android:indeterminateTint="@color/secondary_green"
-            android:layout_marginTop="8dp" />
+            android:text="Todos"
+            app:chipBackgroundColor="@color/card_background"
+            app:chipStrokeColor="@color/secondary_green"
+            app:chipStrokeWidth="1dp"
+            android:textColor="@color/text_dark" />
 
-        <TextView
-            android:id="@+id/textLoadingMessage"
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipGoalkeepers"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cargando..."
-            android:textColor="@color/gray_medium"
-            android:visibility="gone"
-            android:layout_gravity="center_horizontal"
-            android:padding="8dp" />
+            android:text="Porteros"
+            android:layout_marginStart="8dp"
+            app:chipBackgroundColor="@color/card_background"
+            app:chipStrokeColor="@color/secondary_green"
+            app:chipStrokeWidth="1dp"
+            android:textColor="@color/text_dark" />
 
-        <!-- Lista -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewPlayers"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:padding="8dp" />
-
-        <!-- Sin resultados -->
-        <TextView
-            android:id="@+id/textNoResults"
-            android:layout_width="match_parent"
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipDefenders"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sin resultados"
-            android:gravity="center"
-            android:textColor="@color/gray_medium"
-            android:padding="12dp"
-            android:visibility="gone" />
+            android:text="Defensas"
+            android:layout_marginStart="8dp"
+            app:chipBackgroundColor="@color/card_background"
+            app:chipStrokeColor="@color/secondary_green"
+            app:chipStrokeWidth="1dp"
+            android:textColor="@color/text_dark" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipMidfielders"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Centrocampistas"
+            android:layout_marginStart="8dp"
+            app:chipBackgroundColor="@color/card_background"
+            app:chipStrokeColor="@color/secondary_green"
+            app:chipStrokeWidth="1dp"
+            android:textColor="@color/text_dark" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipForwards"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delanteros"
+            android:layout_marginStart="8dp"
+            app:chipBackgroundColor="@color/card_background"
+            app:chipStrokeColor="@color/secondary_green"
+            app:chipStrokeWidth="1dp"
+            android:textColor="@color/text_dark" />
     </LinearLayout>
-</layout>
+
+    <!-- Filtros avanzados -->
+    <LinearLayout
+        android:id="@+id/advancedFiltersLayout"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp">
+
+        <Spinner
+            android:id="@+id/spinnerTeams"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:popupBackground="@color/card_background" />
+
+        <Spinner
+            android:id="@+id/spinnerSort"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:popupBackground="@color/card_background" />
+    </LinearLayout>
+
+    <!-- Acciones -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearFilters"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Limpiar"
+            app:strokeColor="@color/secondary_green"
+            app:iconTint="@color/text_dark"
+            android:textColor="@color/text_dark" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRefreshData"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Actualizar"
+            app:backgroundTint="@color/secondary_green"
+            android:textColor="@color/text_dark" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnToggleFilters"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ocultar Filtros"
+            android:layout_marginStart="8dp"
+            app:backgroundTint="@color/accent_gold"
+            android:textColor="@color/text_dark" />
+    </LinearLayout>
+
+    <!-- Estado / contadores -->
+    <TextView
+        android:id="@+id/textTotalPlayers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Total: 0 jugadores"
+        android:textColor="@color/gray_medium"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp" />
+
+    <TextView
+        android:id="@+id/textFilteredCount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Mostrando: 0 jugadores"
+        android:textColor="@color/gray_medium"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp" />
+
+    <!-- Loading -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:visibility="gone"
+        android:indeterminateTint="@color/secondary_green"
+        android:layout_marginTop="8dp" />
+
+    <TextView
+        android:id="@+id/textLoadingMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cargando..."
+        android:textColor="@color/gray_medium"
+        android:visibility="gone"
+        android:layout_gravity="center_horizontal"
+        android:padding="8dp" />
+
+    <!-- Lista -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewPlayers"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp" />
+
+    <!-- Sin resultados -->
+    <TextView
+        android:id="@+id/textNoResults"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sin resultados"
+        android:gravity="center"
+        android:textColor="@color/gray_medium"
+        android:padding="12dp"
+        android:visibility="gone" />
+
+</LinearLayout>

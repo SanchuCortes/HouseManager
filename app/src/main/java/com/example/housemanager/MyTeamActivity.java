@@ -28,6 +28,7 @@ public class MyTeamActivity extends AppCompatActivity {
     private FootballViewModel vm;
     private PlayersSimpleAdapter adapter;
 
+    // Referencias a las vistas
     private TextView tvHeader;
     private TextView tvPoints;
     private TextView tvTeamValue;
@@ -35,6 +36,7 @@ public class MyTeamActivity extends AppCompatActivity {
     private MaterialButton btnTransfers;
     private MaterialButton btnSetCaptain;
 
+    // Datos del equipo
     private int teamId = -1;
     private String leagueName = "Mi Liga Fantasy";
     private int currentCaptainId = -1;
@@ -45,17 +47,13 @@ public class MyTeamActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_team);
 
-        // Inicializar vistas
         initViews();
         setupToolbar();
         setupRecyclerView();
         setupButtons();
         setupViewModel();
 
-        // Obtener datos del intent
         getIntentData();
-
-        // Cargar datos
         loadTeamData();
     }
 
@@ -82,15 +80,13 @@ public class MyTeamActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.recycler_players);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Adapter con callback para asignar capitán
+        // El adapter maneja el click para asignar capitán
         adapter = new PlayersSimpleAdapter(player -> {
-            // CLICK EN JUGADOR → asignar capitán
             currentCaptainId = player.getId();
             CaptainManager.setCaptain(this, teamId, currentCaptainId);
             adapter.setCaptainId(currentCaptainId);
             recalculatePoints();
 
-            // Mostrar feedback al usuario
             android.widget.Toast.makeText(this,
                     "Capitán asignado: " + player.getName(),
                     android.widget.Toast.LENGTH_SHORT).show();
@@ -100,38 +96,35 @@ public class MyTeamActivity extends AppCompatActivity {
     }
 
     private void setupButtons() {
-        // Botón Transferencias
+        // Botón para ir al mercado de fichajes
         btnTransfers.setOnClickListener(v -> {
             Intent intent = new Intent(this, TransferMarketActivity.class);
             startActivity(intent);
         });
 
-        // Botón Capitán (mostrar info del capitán actual)
+        // Botón para mostrar info del capitán actual
         if (btnSetCaptain != null) {
-            btnSetCaptain.setOnClickListener(v -> {
-                showCaptainInfo();
-            });
+            btnSetCaptain.setOnClickListener(v -> showCaptainInfo());
         }
     }
 
     private void setupViewModel() {
         vm = new ViewModelProvider(this).get(FootballViewModel.class);
 
-        // Observer para la plantilla
+        // Observo cambios en la plantilla
         vm.getSquad().observe(this, players -> {
             currentSquad.clear();
             if (players != null && !players.isEmpty()) {
                 currentSquad.addAll(players);
                 adapter.submit(players);
 
-                // Cargar capitán guardado
+                // Cargo el capitán que tenía guardado
                 currentCaptainId = CaptainManager.getCaptain(this, teamId);
                 adapter.setCaptainId(currentCaptainId);
 
                 recalculatePoints();
                 updateTeamStats();
             } else {
-                // No hay jugadores, mostrar mensaje
                 android.widget.Toast.makeText(this,
                         "Aún no tienes jugadores. Ve al mercado de fichajes.",
                         android.widget.Toast.LENGTH_LONG).show();
@@ -140,8 +133,7 @@ public class MyTeamActivity extends AppCompatActivity {
     }
 
     private void getIntentData() {
-        // Obtener datos del intent
-        teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, 1); // Default team ID = 1
+        teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, 1);
         leagueName = getIntent().getStringExtra(EXTRA_LEAGUE_NAME);
 
         if (leagueName != null) {
@@ -151,16 +143,15 @@ public class MyTeamActivity extends AppCompatActivity {
 
     private void loadTeamData() {
         if (teamId != -1) {
-            // Cargar plantilla del equipo
             vm.loadSquad(teamId);
         } else {
-            // Usar un equipo por defecto o mostrar datos mock
+            // Si no hay team ID, muestro datos de ejemplo
             loadMockTeamData();
         }
     }
 
     private void loadMockTeamData() {
-        // Datos mock para mostrar algo mientras no hay datos reales
+        // Datos de prueba mientras no tengamos datos reales
         List<PlayerAPI> mockPlayers = createMockPlayers();
         currentSquad.clear();
         currentSquad.addAll(mockPlayers);
@@ -176,7 +167,7 @@ public class MyTeamActivity extends AppCompatActivity {
     private List<PlayerAPI> createMockPlayers() {
         List<PlayerAPI> mockPlayers = new ArrayList<>();
 
-        // Crear algunos jugadores mock para demostración
+        // Algunos jugadores de ejemplo
         mockPlayers.add(new PlayerAPI(1, "Ter Stegen", "Portero", "Alemania", 75));
         mockPlayers.add(new PlayerAPI(2, "Piqué", "Defensa", "España", 65));
         mockPlayers.add(new PlayerAPI(3, "Busquets", "Medio", "España", 80));
@@ -192,7 +183,7 @@ public class MyTeamActivity extends AppCompatActivity {
         for (PlayerAPI player : currentSquad) {
             int playerPoints = player.getPoints();
 
-            // Multiplicar por 2 si es el capitán
+            // El capitán puntúa doble
             if (player.getId() == currentCaptainId) {
                 playerPoints *= 2;
             }
@@ -200,21 +191,20 @@ public class MyTeamActivity extends AppCompatActivity {
             totalPoints += playerPoints;
         }
 
-        // Actualizar UI
         if (tvPoints != null) {
             tvPoints.setText(String.valueOf(totalPoints));
         }
     }
 
     private void updateTeamStats() {
-        // Calcular valor del equipo (mock)
-        double teamValue = currentSquad.size() * 12.5; // Promedio de 12.5M por jugador
+        // Calculo aproximado del valor del equipo
+        double teamValue = currentSquad.size() * 12.5; // 12.5M por jugador de media
         if (tvTeamValue != null) {
             tvTeamValue.setText(String.format("%.1fM €", teamValue));
         }
 
-        // Presupuesto restante (mock)
-        double remainingBudget = 150.0 - teamValue; // 150M presupuesto inicial
+        // Presupuesto restante (150M inicial menos valor actual)
+        double remainingBudget = 150.0 - teamValue;
         if (tvRemainingBudget != null) {
             tvRemainingBudget.setText(String.format("%.1fM €", Math.max(0, remainingBudget)));
         }
@@ -223,7 +213,7 @@ public class MyTeamActivity extends AppCompatActivity {
     private void showCaptainInfo() {
         String captainName = "Ninguno";
 
-        // Buscar el nombre del capitán actual
+        // Busco el nombre del capitán actual
         for (PlayerAPI player : currentSquad) {
             if (player.getId() == currentCaptainId) {
                 captainName = player.getName();
