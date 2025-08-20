@@ -106,38 +106,38 @@ public class PointsCalculator {
 
     // PUNTOS POR GOLES SEGÚN POSICIÓN
     private static int getGoalPoints(String position) {
-        switch (position.toUpperCase()) {
-            case "GK": return 10;  // Portero
-            case "DEF": return 8;  // Defensa
-            case "MID": return 6;  // Centrocampista
-            case "FWD": return 4;  // Delantero
-            default: return 5;     // Posición desconocida
+        switch (position) {
+            case "Portero": return 10;     // Portero
+            case "Defensa": return 8;      // Defensa
+            case "Medio": return 6;        // Medio
+            case "Delantero": return 4;    // Delantero
+            default: return 5;             // Posición desconocida
         }
     }
 
     // CLEAN SHEET Y GOLES RECIBIDOS
     private static int getGoalsConcededPoints(String position, int goalsAgainst) {
-        switch (position.toUpperCase()) {
-            case "GK": // Porteros
+        switch (position) {
+            case "Portero": // Porteros
                 if (goalsAgainst == 0) return 6;      // 0 goles = +6pts
                 else if (goalsAgainst == 1) return 4; // 1 gol = +4pts
                 else if (goalsAgainst == 2) return 2; // 2 goles = +2pts
                 else if (goalsAgainst == 3) return 0; // 3 goles = 0pts
                 else return -(goalsAgainst - 3);      // 4+ goles = -1pt por gol extra
 
-            case "DEF": // Defensas
+            case "Defensa": // Defensas
                 if (goalsAgainst == 0) return 4;      // 0 goles = +4pts
                 else if (goalsAgainst == 1) return 2; // 1 gol = +2pts
                 else if (goalsAgainst == 2) return 1; // 2 goles = +1pt
                 else if (goalsAgainst == 3) return 0; // 3 goles = 0pts
                 else return -((goalsAgainst - 3) / 2); // 4+ goles = -1pt cada 2 goles
 
-            case "MID": // Centrocampistas
+            case "Medio": // Medios
                 if (goalsAgainst == 0) return 2;      // 0 goles = +2pts
                 else if (goalsAgainst <= 2) return 1; // 1-2 goles = +1pt
                 else return 0;                        // 3+ goles = 0pts
 
-            case "FWD": // Delanteros
+            case "Delantero": // Delanteros
                 if (goalsAgainst == 0) return 1;      // 0 goles = +1pt
                 else return 0;                        // 1+ goles = 0pts
 
@@ -154,25 +154,25 @@ public class PointsCalculator {
         if (teamStats == null) return 0;
 
         try {
-            switch (position.toUpperCase()) {
-                case "GK": // Porteros: Bonus por paradas
+            switch (position) {
+                case "Portero": // Porteros: Bonus por paradas
                     int saves = teamStats.getSaves();
                     bonus += saves / 3; // +1 punto cada 3 paradas
                     break;
 
-                case "MID": // Centrocampistas: Bonus por posesión
+                case "Medio": // Medios: Bonus por posesión
                     int possession = teamStats.getBallPossession();
                     if (possession >= 65) bonus += 2;
                     else if (possession >= 60) bonus += 1;
                     break;
 
-                case "FWD": // Delanteros: Bonus por disparos
+                case "Delantero": // Delanteros: Bonus por disparos
                     int shots = teamStats.getShotsOnGoal();
                     if (shots >= 6) bonus += 2;
                     else if (shots >= 4) bonus += 1;
                     break;
 
-                case "DEF": // Defensas: Sin bonus específico adicional
+                case "Defensa": // Defensas: Sin bonus específico adicional
                 default:
                     break;
             }
@@ -221,8 +221,8 @@ public class PointsCalculator {
         stats.setTeamId(teamId);
 
         // Estadísticas simuladas realistas
-        switch (position.toUpperCase()) {
-            case "GK":
+        switch (position) {
+            case "Portero":
                 stats.setGoals(0);
                 stats.setAssists(0);
                 stats.setPenaltiesScored(0);
@@ -232,7 +232,7 @@ public class PointsCalculator {
                 stats.setTeamGoalsAgainst(1); // 1 gol recibido
                 break;
 
-            case "DEF":
+            case "Defensa":
                 stats.setGoals(0);
                 stats.setAssists(1);
                 stats.setPenaltiesScored(0);
@@ -242,7 +242,7 @@ public class PointsCalculator {
                 stats.setTeamGoalsAgainst(1);
                 break;
 
-            case "MID":
+            case "Medio":
                 stats.setGoals(1);
                 stats.setAssists(1);
                 stats.setPenaltiesScored(0);
@@ -252,7 +252,7 @@ public class PointsCalculator {
                 stats.setTeamGoalsAgainst(1);
                 break;
 
-            case "FWD":
+            case "Delantero":
                 stats.setGoals(2);
                 stats.setAssists(0);
                 stats.setPenaltiesScored(1);

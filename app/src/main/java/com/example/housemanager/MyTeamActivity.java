@@ -2,10 +2,13 @@ package com.example.housemanager;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,16 +23,20 @@ import java.util.List;
 public class MyTeamActivity extends AppCompatActivity {
 
     public static final String EXTRA_TEAM_ID = "team_id";
+    public static final String EXTRA_LEAGUE_NAME = "EXTRA_LEAGUE_NAME";
 
     private FootballViewModel vm;
     private PlayersSimpleAdapter adapter;
 
     private TextView tvHeader;
-    private TextView tvPoints;          // <-- CAMBIA a tu id real si no es éste
+    private TextView tvPoints;
+    private TextView tvTeamValue;
+    private TextView tvRemainingBudget;
     private MaterialButton btnTransfers;
-    private MaterialButton btnCaptain;  // se mantiene por si quieres usarlo para otra acción
+    private MaterialButton btnSetCaptain;
 
     private int teamId = -1;
+    private String leagueName = "Mi Liga Fantasy";
     private int currentCaptainId = -1;
     private final List<PlayerAPI> currentSquad = new ArrayList<>();
 
@@ -38,60 +45,204 @@ public class MyTeamActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_team);
 
-        tvHeader     = findViewById(R.id.tv_league_header);
-        tvPoints     = findViewById(R.id.tv_points);
+        // Inicializar vistas
+        initViews();
+        setupToolbar();
+        setupRecyclerView();
+        setupButtons();
+        setupViewModel();
+
+        // Obtener datos del intent
+        getIntentData();
+
+        // Cargar datos
+        loadTeamData();
+    }
+
+    private void initViews() {
+        tvHeader = findViewById(R.id.tv_league_header);
+        tvPoints = findViewById(R.id.tv_points);
+        tvTeamValue = findViewById(R.id.tv_team_value);
+        tvRemainingBudget = findViewById(R.id.tv_remaining_budget);
         btnTransfers = findViewById(R.id.btn_transfers);
-     //   btnCaptain   = findViewById(R.id.btn_captain);
+        btnSetCaptain = findViewById(R.id.btn_set_captain);
+    }
 
-        tvHeader.setText("Mi Liga Fantasy");
+    private void setupToolbar() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        RecyclerView rv = findViewById(R.id.recycler_players);
-        rv.setLayoutManager(new LinearLayoutManager(this));
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Mi Equipo");
+        }
+    }
+
+    private void setupRecyclerView() {
+        RecyclerView recyclerView = findViewById(R.id.recycler_players);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Adapter con callback para asignar capitán
         adapter = new PlayersSimpleAdapter(player -> {
             // CLICK EN JUGADOR → asignar capitán
             currentCaptainId = player.getId();
             CaptainManager.setCaptain(this, teamId, currentCaptainId);
             adapter.setCaptainId(currentCaptainId);
-            recalcTotals();
-        });
-        rv.setAdapter(adapter);
+            recalculatePoints();
 
+            // Mostrar feedback al usuario
+            android.widget.Toast.makeText(this,
+                    "Capitán asignado: " + player.getName(),
+                    android.widget.Toast.LENGTH_SHORT).show();
+        });
+
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void setupButtons() {
+        // Botón Transferencias
+        btnTransfers.setOnClickListener(v -> {
+            Intent intent = new Intent(this, TransferMarketActivity.class);
+            startActivity(intent);
+        });
+
+        // Botón Capitán (mostrar info del capitán actual)
+        if (btnSetCaptain != null) {
+            btnSetCaptain.setOnClickListener(v -> {
+                showCaptainInfo();
+            });
+        }
+    }
+
+    private void setupViewModel() {
         vm = new ViewModelProvider(this).get(FootballViewModel.class);
+
+        // Observer para la plantilla
         vm.getSquad().observe(this, players -> {
             currentSquad.clear();
-            if (players != null) currentSquad.addAll(players);
-            adapter.submit(players);
+            if (players != null && !players.isEmpty()) {
+                currentSquad.addAll(players);
+                adapter.submit(players);
 
-            // Cargar capitán guardado
-            currentCaptainId = CaptainManager.getCaptain(this, teamId);
-            adapter.setCaptainId(currentCaptainId);
-            recalcTotals();
-        });
+                // Cargar capitán guardado
+                currentCaptainId = CaptainManager.getCaptain(this, teamId);
+                adapter.setCaptainId(currentCaptainId);
 
-        teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, -1);
-        if (teamId != -1) {
-            vm.loadSquad(teamId);
-        }
-
-        btnTransfers.setOnClickListener(v ->
-                startActivity(new Intent(this, TransferMarketActivity.class))
-        );
-
-        // btnCaptain se puede mantener para otra acción (p.ej. abrir mercado o mostrar quién es el capitán)
-        btnCaptain.setOnClickListener(v -> {
-            // opcional: mostrar un dialog con el capitán actual
+                recalculatePoints();
+                updateTeamStats();
+            } else {
+                // No hay jugadores, mostrar mensaje
+                android.widget.Toast.makeText(this,
+                        "Aún no tienes jugadores. Ve al mercado de fichajes.",
+                        android.widget.Toast.LENGTH_LONG).show();
+            }
         });
     }
 
-    private void recalcTotals() {
-        int total = 0;
-        for (PlayerAPI p : currentSquad) {
-            int pts = p.getPoints(); // asegúrate de que PlayerAPI tiene getPoints()
-            if (p.getId() == currentCaptainId) pts *= 2;
-            total += pts;
+    private void getIntentData() {
+        // Obtener datos del intent
+        teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, 1); // Default team ID = 1
+        leagueName = getIntent().getStringExtra(EXTRA_LEAGUE_NAME);
+
+        if (leagueName != null) {
+            tvHeader.setText(leagueName);
         }
+    }
+
+    private void loadTeamData() {
+        if (teamId != -1) {
+            // Cargar plantilla del equipo
+            vm.loadSquad(teamId);
+        } else {
+            // Usar un equipo por defecto o mostrar datos mock
+            loadMockTeamData();
+        }
+    }
+
+    private void loadMockTeamData() {
+        // Datos mock para mostrar algo mientras no hay datos reales
+        List<PlayerAPI> mockPlayers = createMockPlayers();
+        currentSquad.clear();
+        currentSquad.addAll(mockPlayers);
+        adapter.submit(mockPlayers);
+
+        currentCaptainId = CaptainManager.getCaptain(this, 1);
+        adapter.setCaptainId(currentCaptainId);
+
+        recalculatePoints();
+        updateTeamStats();
+    }
+
+    private List<PlayerAPI> createMockPlayers() {
+        List<PlayerAPI> mockPlayers = new ArrayList<>();
+
+        // Crear algunos jugadores mock para demostración
+        mockPlayers.add(new PlayerAPI(1, "Ter Stegen", "Portero", "Alemania", 75));
+        mockPlayers.add(new PlayerAPI(2, "Piqué", "Defensa", "España", 65));
+        mockPlayers.add(new PlayerAPI(3, "Busquets", "Medio", "España", 80));
+        mockPlayers.add(new PlayerAPI(4, "Lewandowski", "Delantero", "Polonia", 95));
+        mockPlayers.add(new PlayerAPI(5, "Pedri", "Medio", "España", 70));
+
+        return mockPlayers;
+    }
+
+    private void recalculatePoints() {
+        int totalPoints = 0;
+
+        for (PlayerAPI player : currentSquad) {
+            int playerPoints = player.getPoints();
+
+            // Multiplicar por 2 si es el capitán
+            if (player.getId() == currentCaptainId) {
+                playerPoints *= 2;
+            }
+
+            totalPoints += playerPoints;
+        }
+
+        // Actualizar UI
         if (tvPoints != null) {
-            tvPoints.setText(String.valueOf(total));
+            tvPoints.setText(String.valueOf(totalPoints));
         }
+    }
+
+    private void updateTeamStats() {
+        // Calcular valor del equipo (mock)
+        double teamValue = currentSquad.size() * 12.5; // Promedio de 12.5M por jugador
+        if (tvTeamValue != null) {
+            tvTeamValue.setText(String.format("%.1fM €", teamValue));
+        }
+
+        // Presupuesto restante (mock)
+        double remainingBudget = 150.0 - teamValue; // 150M presupuesto inicial
+        if (tvRemainingBudget != null) {
+            tvRemainingBudget.setText(String.format("%.1fM €", Math.max(0, remainingBudget)));
+        }
+    }
+
+    private void showCaptainInfo() {
+        String captainName = "Ninguno";
+
+        // Buscar el nombre del capitán actual
+        for (PlayerAPI player : currentSquad) {
+            if (player.getId() == currentCaptainId) {
+                captainName = player.getName();
+                break;
+            }
+        }
+
+        android.widget.Toast.makeText(this,
+                "Capitán actual: " + captainName +
+                        "\n\nToca un jugador para asignarlo como capitán",
+                android.widget.Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
