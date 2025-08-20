@@ -1,5 +1,6 @@
 package com.example.housemanager;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -16,7 +17,7 @@ import com.example.housemanager.viewmodel.FootballViewModel;
 public class TeamsBrowserActivity extends AppCompatActivity implements TeamsListAdapter.OnTeamClickListener {
 
     private ActivityTeamsBrowserBinding binding;
-    private FootballViewModel vm;
+    private FootballViewModel viewModel;
     private TeamsListAdapter adapter;
 
     @Override
@@ -25,22 +26,39 @@ public class TeamsBrowserActivity extends AppCompatActivity implements TeamsList
         binding = ActivityTeamsBrowserBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Toolbar
+        setupToolbar();
+        setupRecyclerView();
+        setupViewModel();
+    }
+
+    private void setupToolbar() {
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Equipos (LaLiga)");
+            getSupportActionBar().setTitle("Equipos de LaLiga");
         }
+    }
 
-        // Recycler
+    private void setupRecyclerView() {
         adapter = new TeamsListAdapter(this);
         binding.recyclerTeams.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerTeams.setAdapter(adapter);
+    }
 
-        // ViewModel
-        vm = new ViewModelProvider(this).get(FootballViewModel.class);
-        vm.getTeams().observe(this, teams -> adapter.submit(teams));
-        vm.loadTeams();
+    private void setupViewModel() {
+        viewModel = new ViewModelProvider(this).get(FootballViewModel.class);
+
+        // Cuando cambien los equipos, actualizar la lista
+        viewModel.getTeams().observe(this, teams -> {
+            if (teams != null && !teams.isEmpty()) {
+                adapter.submit(teams);
+            } else {
+                Toast.makeText(this, "No hay equipos disponibles", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Cargar los equipos
+        viewModel.loadTeams();
     }
 
     @Override
@@ -49,10 +67,13 @@ public class TeamsBrowserActivity extends AppCompatActivity implements TeamsList
         return true;
     }
 
-    // Click en un equipo: por ahora, toast
+    // Cuando toquen un equipo, abrir su detalle
     @Override
     public void onTeamClick(TeamAPI team) {
-        Toast.makeText(this, "Equipo: " + (team.getName() != null ? team.getName() : "-"), Toast.LENGTH_SHORT).show();
-        // Si luego tienes TeamDetailActivity, navegas desde aquí.
+        Intent intent = new Intent(this, TeamDetailActivity.class);
+        intent.putExtra(TeamDetailActivity.EXTRA_TEAM_ID, team.getId());
+        intent.putExtra(TeamDetailActivity.EXTRA_TEAM_NAME, team.getName());
+        intent.putExtra(TeamDetailActivity.EXTRA_TEAM_CREST, team.getCrest());
+        startActivity(intent);
     }
 }

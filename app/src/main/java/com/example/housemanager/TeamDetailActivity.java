@@ -1,76 +1,149 @@
 package com.example.housemanager;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.ViewGroup;
+import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.example.housemanager.api.models.PlayerAPI;
 import com.example.housemanager.viewmodel.FootballViewModel;
 
-public class TeamDetailActivity extends AppCompatActivity {
+public class TeamDetailActivity extends AppCompatActivity implements PlayersSimpleAdapter.OnPlayerClick {
 
     public static final String EXTRA_TEAM_ID = "team_id";
+    public static final String EXTRA_TEAM_NAME = "team_name";
+    public static final String EXTRA_TEAM_CREST = "team_crest";
 
-    private FootballViewModel vm;
+    private FootballViewModel viewModel;
     private PlayersSimpleAdapter adapter;
+
+    private int teamId = -1;
+    private String teamName = "Equipo";
+    private String teamCrest = "";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_team_detail);
 
-        int layoutId = getResources().getIdentifier("activity_team_detail", "layout", getPackageName());
-        RecyclerView rv;
+        getIntentData();
+        setupToolbar();
+        setupRecyclerView();
+        setupViewModel();
+        loadTeamData();
+    }
 
-        if (layoutId != 0) {
-            setContentView(layoutId);
+    private void getIntentData() {
+        teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, -1);
+        teamName = getIntent().getStringExtra(EXTRA_TEAM_NAME);
+        teamCrest = getIntent().getStringExtra(EXTRA_TEAM_CREST);
 
-            int rvId = getResources().getIdentifier("recycler_squad", "id", getPackageName());
-            if (rvId == 0) {
-                // alternativa común en tu proyecto
-                rvId = getResources().getIdentifier("recycler_players", "id", getPackageName());
-            }
+        if (teamName == null) teamName = "Equipo";
+        if (teamCrest == null) teamCrest = "";
 
-            if (rvId != 0) {
-                rv = findViewById(rvId);
-            } else {
-                // si el layout no tiene RecyclerView con esos ids, lo creamos y añadimos
-                rv = new RecyclerView(this);
-                rv.setLayoutParams(new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                ));
-                ((ViewGroup) findViewById(android.R.id.content)).addView(rv);
-            }
-        } else {
-            // no existe activity_team_detail.xml: pantalla 100% programática
-            rv = new RecyclerView(this);
-            rv.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-            ));
-            setContentView(rv);
-        }
-
-        rv.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new PlayersSimpleAdapter(); // sin callback: sólo mostramos la plantilla del equipo
-        rv.setAdapter(adapter);
-
-        vm = new ViewModelProvider(this).get(FootballViewModel.class);
-        vm.getSquad().observe(this, adapter::submit);
-
-        int teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, -1);
+        // Compatibilidad con otros extras
         if (teamId == -1) {
-            // por compatibilidad con otros sitios donde el extra pueda llamarse "TEAM_ID"
             teamId = getIntent().getIntExtra("TEAM_ID", -1);
         }
-        if (teamId != -1) {
-            vm.loadSquad(teamId);
+    }
+
+    private void setupToolbar() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle(teamName);
+        }
+    }
+
+    private void setupRecyclerView() {
+        RecyclerView recyclerView = findViewById(R.id.recycler_squad);
+        if (recyclerView == null) {
+            // Si no existe recycler_squad, buscar recycler_players
+            recyclerView = findViewById(R.id.recycler_players);
         }
 
-        setTitle("Plantilla del equipo");
+        if (recyclerView != null) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            adapter = new PlayersSimpleAdapter(this);
+            recyclerView.setAdapter(adapter);
+        } else {
+            Toast.makeText(this, "Error: RecyclerView no encontrado", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+    }
+
+    private void setupViewModel() {
+        viewModel = new ViewModelProvider(this).get(FootballViewModel.class);
+
+        // Observer para la plantilla del equipo
+        viewModel.getSquad().observe(this, players -> {
+            if (players != null && !players.isEmpty()) {
+                adapter.submit(players);
+                android.util.Log.d("TeamDetail", "Plantilla cargada: " + players.size() + " jugadores");
+            } else {
+                Toast.makeText(this, "No se encontraron jugadores para este equipo", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadTeamData() {
+        // Configurar header del equipo si existen las vistas
+        TextView tvTitle = findViewById(R.id.tv_title);
+        ImageView ivCrest = findViewById(R.id.iv_crest);
+
+        if (tvTitle != null) {
+            tvTitle.setText(teamName);
+        }
+
+        if (ivCrest != null && !teamCrest.isEmpty()) {
+            Glide.with(this)
+                    .load(teamCrest)
+                    .placeholder(R.drawable.ic_group_add)
+                    .error(R.drawable.ic_group_add)
+                    .into(ivCrest);
+        }
+
+        // Cargar plantilla del equipo
+        if (teamId != -1) {
+            viewModel.loadSquad(teamId);
+            android.util.Log.d("TeamDetail", "Cargando plantilla del equipo: " + teamId);
+        } else {
+            Toast.makeText(this, "ID de equipo no válido", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onPlayerClick(PlayerAPI player) {
+        // Abrir detalles del jugador
+        Intent intent = new Intent(this, com.example.housemanager.ui.PlayerDetailActivity.class);
+        intent.putExtra("player_id", player.getId());
+        intent.putExtra("player_name", player.getName());
+        intent.putExtra("player_position", player.getPosition());
+        intent.putExtra("player_nationality", player.getNationality());
+        intent.putExtra("player_points", player.getPoints());
+        intent.putExtra("team_name", teamName);
+        startActivity(intent);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
