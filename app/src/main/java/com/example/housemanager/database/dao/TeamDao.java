@@ -5,62 +5,40 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
-import androidx.room.Update;
 
 import com.example.housemanager.database.entities.TeamEntity;
 
 import java.util.List;
 
+/** Acceso a tabla teams. */
 @Dao
 public interface TeamDao {
 
-    // ===== INSERTS Y UPDATES =====
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertTeam(TeamEntity team);
-
+    /** Inserta una lista de equipos. Reemplaza si existe. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTeams(List<TeamEntity> teams);
 
-    @Update
-    void updateTeam(TeamEntity team);
+    /** Inserta un equipo. Reemplaza si existe. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertTeam(TeamEntity team);
 
-    @Query("DELETE FROM teams WHERE teamId = :teamId")
-    void deleteTeam(int teamId);
-
+    /** Borra todos los equipos. */
     @Query("DELETE FROM teams")
     void deleteAllTeams();
 
-    // ===== CONSULTAS BÁSICAS =====
+    /** Devuelve todos los equipos para la UI. */
     @Query("SELECT * FROM teams ORDER BY name ASC")
     LiveData<List<TeamEntity>> getAllTeamEntities();
 
-    @Query("SELECT * FROM teams WHERE teamId = :teamId")
-    LiveData<TeamEntity> getTeamById(int teamId);
-
-    @Query("SELECT * FROM teams WHERE name LIKE '%' || :searchTerm || '%' ORDER BY name ASC")
-    LiveData<List<TeamEntity>> searchTeamsByName(String searchTerm);
-
-    // ===== CONSULTAS ÚTILES =====
-    @Query("SELECT COUNT(*) FROM teams")
-    LiveData<Integer> getTeamsCount();
-
-    @Query("SELECT name FROM teams ORDER BY name ASC")
-    LiveData<List<String>> getAllTeamNames();
-
-    @Query("SELECT teamId, name FROM teams ORDER BY name ASC")
-    LiveData<List<TeamEntity>> getTeamsForSpinner();
-
-    // ===== CONSULTAS PARA VALIDACIÓN =====
-    @Query("SELECT EXISTS(SELECT 1 FROM teams WHERE teamId = :teamId)")
-    LiveData<Boolean> teamExists(int teamId);
-
-    @Query("SELECT EXISTS(SELECT 1 FROM teams WHERE name = :teamName)")
-    LiveData<Boolean> teamNameExists(String teamName);
-
-    // ===== PARA TESTING =====
+    /** Conteo síncrono para decisiones de sincronización. */
     @Query("SELECT COUNT(*) FROM teams")
     int getTeamsCountSync();
 
-    @Query("SELECT * FROM teams")
+    /** Listado síncrono de equipos para procesos internos. */
+    @Query("SELECT * FROM teams ORDER BY name ASC")
     List<TeamEntity> getAllTeamsSync();
+
+    /** Verifica existencia de un equipo. */
+    @Query("SELECT EXISTS(SELECT 1 FROM teams WHERE teamId = :teamId)")
+    LiveData<Boolean> teamExists(int teamId);
 }

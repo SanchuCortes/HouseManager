@@ -7,11 +7,14 @@ import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
 
+/** Endpoints necesarios para equipos y plantillas. */
 public interface FootballApiService {
-    // LaLiga (PD = Primera División en football-data.org)
+
+    /** Lista de equipos de LaLiga. */
     @GET("competitions/PD/teams")
     Call<TeamsResponse> getLaLigaTeams();
 
+    /** Detalle de equipo con plantilla. */
     @GET("teams/{id}")
     Call<TeamAPI> getTeamDetails(@Path("id") int teamId);
 }

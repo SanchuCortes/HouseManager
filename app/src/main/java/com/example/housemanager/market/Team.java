@@ -1,58 +1,26 @@
 package com.example.housemanager.market;
 
-import androidx.room.Entity;
-import androidx.room.PrimaryKey;
-import androidx.room.ColumnInfo;
+// IMPORTANTE: Esta clase NO debe tener NINGUNA anotación de Room
+// Es solo un POJO simple para la UI
 
-@Entity(tableName = "teams")
 public class Team {
-    @PrimaryKey
-    @ColumnInfo(name = "team_id")
     private int teamId;
-
-    @ColumnInfo(name = "name")
     private String name;
-
-    @ColumnInfo(name = "short_name")
     private String shortName;
-
-    @ColumnInfo(name = "tla")
-    private String tla; // Código 3 letras
-
-    @ColumnInfo(name = "crest_url")
+    private String tla;
     private String crestUrl;
-
-    @ColumnInfo(name = "position")
-    private int position; // Posición en la tabla
-
-    @ColumnInfo(name = "points")
-    private int points; // Puntos en la liga real
-
-    @ColumnInfo(name = "played_games")
+    private int position;
+    private int points;
     private int playedGames;
-
-    @ColumnInfo(name = "won")
     private int won;
-
-    @ColumnInfo(name = "draw")
     private int draw;
-
-    @ColumnInfo(name = "lost")
     private int lost;
-
-    @ColumnInfo(name = "goals_for")
     private int goalsFor;
-
-    @ColumnInfo(name = "goals_against")
     private int goalsAgainst;
-
-    @ColumnInfo(name = "goal_difference")
     private int goalDifference;
-
-    @ColumnInfo(name = "last_updated")
     private long lastUpdated;
 
-    // Constructor vacío requerido por Room
+    // Constructor vacío
     public Team() {}
 
     // Constructor básico
@@ -71,27 +39,6 @@ public class Team {
         this.goalsFor = 0;
         this.goalsAgainst = 0;
         this.goalDifference = 0;
-        this.lastUpdated = System.currentTimeMillis();
-    }
-
-    // Constructor completo
-    public Team(int teamId, String name, String shortName, String tla, String crestUrl,
-                int position, int points, int playedGames, int won, int draw, int lost,
-                int goalsFor, int goalsAgainst, int goalDifference) {
-        this.teamId = teamId;
-        this.name = name;
-        this.shortName = shortName;
-        this.tla = tla;
-        this.crestUrl = crestUrl;
-        this.position = position;
-        this.points = points;
-        this.playedGames = playedGames;
-        this.won = won;
-        this.draw = draw;
-        this.lost = lost;
-        this.goalsFor = goalsFor;
-        this.goalsAgainst = goalsAgainst;
-        this.goalDifference = goalDifference;
         this.lastUpdated = System.currentTimeMillis();
     }
 
@@ -129,7 +76,7 @@ public class Team {
     public void setGoalDifference(int goalDifference) { this.goalDifference = goalDifference; }
     public void setLastUpdated(long lastUpdated) { this.lastUpdated = lastUpdated; }
 
-    // Métodos helper
+    // Métodos útiles
     public String getFormattedRecord() {
         return won + "W-" + draw + "D-" + lost + "L";
     }
@@ -141,29 +88,5 @@ public class Team {
     public double getWinPercentage() {
         if (playedGames == 0) return 0.0;
         return (double) won / playedGames * 100;
-    }
-
-    @Override
-    public String toString() {
-        return "Team{" +
-                "teamId=" + teamId +
-                ", name='" + name + '\'' +
-                ", tla='" + tla + '\'' +
-                ", position=" + position +
-                ", points=" + points +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Team team = (Team) o;
-        return teamId == team.teamId;
-    }
-
-    @Override
-    public int hashCode() {
-        return Integer.hashCode(teamId);
     }
 }

@@ -1,8 +1,8 @@
 package com.example.housemanager.api.models;
 
-import androidx.room.Ignore;
 import com.google.gson.annotations.SerializedName;
 
+// Esta clase es para recibir datos de la API, nada más
 public class PlayerAPI {
 
     @SerializedName("id")
@@ -17,11 +17,13 @@ public class PlayerAPI {
     @SerializedName("nationality")
     private String nationality;
 
+    // este campo no viene de la API, lo calculamos nosotros
     private int points;
 
+    // constructor vacío para Gson
     public PlayerAPI() { }
 
-    @Ignore
+    // constructor simple para cuando creamos uno manualmente
     public PlayerAPI(int id, String name, String position, String nationality, int points) {
         this.id = id;
         this.name = name;
@@ -30,18 +32,17 @@ public class PlayerAPI {
         this.points = points;
     }
 
+    // getters simples
     public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
     public String getPosition() { return position; }
-    public void setPosition(String position) { this.position = position; }
-
     public String getNationality() { return nationality; }
-    public void setNationality(String nationality) { this.nationality = nationality; }
-
     public int getPoints() { return points; }
+
+    // setters simples
+    public void setId(int id) { this.id = id; }
+    public void setName(String name) { this.name = name; }
+    public void setPosition(String position) { this.position = position; }
+    public void setNationality(String nationality) { this.nationality = nationality; }
     public void setPoints(int points) { this.points = points; }
 }
