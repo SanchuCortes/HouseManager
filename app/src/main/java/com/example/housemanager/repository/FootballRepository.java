@@ -130,6 +130,78 @@ public class FootballRepository {
         return playerDao.getAvailablePlayersCount();
     }
 
+    /** Jugadores por posición para el mercado. */
+    public LiveData<List<Player>> getPlayersByPosition(String position) {
+        if (position == null) return getAllPlayers();
+        String p = position.trim().toLowerCase();
+        LiveData<List<PlayerEntity>> source;
+        switch (p) {
+            case "portero":
+            case "gk":
+            case "goalkeeper":
+                source = playerDao.getAvailablePorteros();
+                break;
+            case "defensa":
+            case "df":
+            case "defender":
+                source = playerDao.getAvailableDefensas();
+                break;
+            case "medio":
+            case "mf":
+            case "midfielder":
+                source = playerDao.getAvailableMedios();
+                break;
+            case "delantero":
+            case "fw":
+            case "forward":
+                source = playerDao.getAvailableDelanteros();
+                break;
+            default:
+                return getAllPlayers();
+        }
+        return Transformations.map(source, this::convertPlayerEntitiesToMarketPlayers);
+    }
+
+    /** Compra un jugador (lo marca como no disponible). */
+    public void buyPlayer(int playerId, @Nullable SyncCallback callback) {
+        executor.execute(() -> {
+            try {
+                playerDao.markAsBought(playerId);
+                if (callback != null) runOnMainThread(callback::onSuccess);
+            } catch (Exception e) {
+                if (callback != null) runOnMainThread(() -> callback.onError(e));
+            }
+        });
+    }
+
+    /** Vende un jugador (lo marca como disponible). */
+    public void sellPlayer(int playerId, @Nullable SyncCallback callback) {
+        executor.execute(() -> {
+            try {
+                playerDao.markAsAvailable(playerId);
+                if (callback != null) runOnMainThread(callback::onSuccess);
+            } catch (Exception e) {
+                if (callback != null) runOnMainThread(() -> callback.onError(e));
+            }
+        });
+    }
+
+    /** Fuerza sincronización completa desde API. */
+    public void forceSyncFromAPI(@Nullable SyncCallback callback) {
+        isSyncing.postValue(true);
+        syncStatus.postValue("Forzando sincronización...");
+        executor.execute(() -> {
+            try {
+                // Limpieza básica para garantizar datos frescos
+                teamDao.deleteAllTeams();
+                playerDao.deleteAllPlayers();
+                performFullSync(callback);
+            } catch (Exception e) {
+                handleSyncError(e, callback);
+            }
+        });
+    }
+
     /** Punto de entrada de sincronización. Decide estrategia y ejecuta. */
     public void syncLaLigaTeams(@Nullable SyncCallback callback) {
         isSyncing.postValue(true);

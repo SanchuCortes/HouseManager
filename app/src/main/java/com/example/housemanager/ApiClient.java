@@ -10,14 +10,13 @@ import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-/** Retrofit con cabecera de autenticación. */
+/** Retrofit y cabecera de autenticación. */
 public final class ApiClient {
 
     private static volatile Retrofit retrofit;
 
     private ApiClient() { }
 
-    /** Devuelve Retrofit configurado con la clave y base URL. */
     public static Retrofit getClient() {
         if (retrofit == null) {
             synchronized (ApiClient.class) {

@@ -73,4 +73,12 @@ public interface PlayerDao {
     /** Conteo síncrono para decisiones de sincronización. */
     @Query("SELECT COUNT(*) FROM players")
     int getPlayersCountSync();
+
+    /** Marca un jugador como comprado (no disponible). */
+    @Query("UPDATE players SET available = 0 WHERE playerId = :playerId")
+    void markAsBought(int playerId);
+
+    /** Marca un jugador como disponible (en venta). */
+    @Query("UPDATE players SET available = 1 WHERE playerId = :playerId")
+    void markAsAvailable(int playerId);
 }

@@ -71,7 +71,7 @@
             android:parentActivityName=".LeagueDetailActivity" />
 
         <activity
-            android:name=".ui.team.TeamsBrowserActivity"
+            android:name=".TeamsBrowserActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager" />
