@@ -104,11 +104,12 @@ public class CreateLeagueActivity extends AppCompatActivity {
         intent.putExtra("league_type", leagueType);
         startActivity(intent);
 
-        showToast("Configurando liga " + leagueType);
+        com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Configurando liga " + leagueType, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
     }
 
     private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        // Reemplazado por Snackbar en llamadas de UI; mantener método para compatibilidad si se usa en el futuro
+        android.util.Log.d(TAG, message);
     }
 
     @Override

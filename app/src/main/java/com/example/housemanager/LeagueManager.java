@@ -19,10 +19,39 @@ public class LeagueManager {
     // Necesario para LeaguesActivity
     public List<League> getUserLeagues() { return leagues; }
 
-    public League createLeague(String name, String type, String marketHour, String teamType, boolean isPrivate) {
-        League l = new League(name, type, isPrivate, 200, marketHour, teamType, 1, "Activa", "01/01/2025");
+    public League createLeague(android.content.Context context, String name, String typeOrBudget, String marketHour, String teamType, boolean isPrivate) {
+        // Interpretar el segundo parámetro como presupuesto (así se usaba en LeagueConfigActivity)
+        int budget = parseBudgetMillions(typeOrBudget);
+        String typeText = isPrivate ? "Privada" : "Comunitaria";
+        League l = new League(name, typeText, isPrivate, budget, marketHour, teamType, 1, "Activa", currentDate());
         leagues.add(l);
+
+        // Guardar en Room en un hilo de BD
+        com.example.housemanager.database.HouseManagerDatabase db = com.example.housemanager.database.HouseManagerDatabase.getInstance(context.getApplicationContext());
+        java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+            com.example.housemanager.database.entities.LeagueEntity e = new com.example.housemanager.database.entities.LeagueEntity();
+            e.setName(name);
+            e.setType(typeText);
+            e.setBudget(budget);
+            e.setMarketHour(marketHour);
+            e.setTeamType(teamType);
+            e.setParticipants(1);
+            e.setStatus("Activa");
+            e.setCreatedDate(currentDate());
+            db.leagueDao().insertLeague(e);
+        });
         return l;
+    }
+
+    private int parseBudgetMillions(String text) {
+        if (text == null) return 150;
+        String digits = text.replaceAll("[^0-9]", "");
+        try { return Integer.parseInt(digits); } catch (Exception ignored) { return 150; }
+    }
+
+    private String currentDate() {
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault());
+        return sdf.format(new java.util.Date());
     }
 
     public static class League implements Serializable {

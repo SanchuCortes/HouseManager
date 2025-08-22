@@ -94,6 +94,13 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager" />
 
+        <activity
+            android:name=".ClassificationActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.HouseManager"
+            android:parentActivityName=".LeagueDetailActivity" />
+
     </application>
 
 </manifest>

@@ -73,6 +73,10 @@ public class PlayersSimpleAdapter extends RecyclerView.Adapter<PlayersSimpleAdap
         String pos = player.getPosition() != null ? player.getPosition() : "–";
         holder.tvPos.setText(pos);
 
+        // puntos del jugador (mapeado desde PlayerEntity.totalPoints)
+        int pts = player.getPoints();
+        holder.tvPoints.setText(pts + " pts");
+
         // si hay listener, manejamos el click
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -90,12 +94,14 @@ public class PlayersSimpleAdapter extends RecyclerView.Adapter<PlayersSimpleAdap
     static class VH extends RecyclerView.ViewHolder {
         TextView tvName;
         TextView tvPos;
+        TextView tvPoints;
 
         VH(@NonNull View itemView) {
             super(itemView);
             // estos IDs tienen que coincidir con item_player_simple.xml
             tvName = itemView.findViewById(R.id.tv_player_name);
             tvPos = itemView.findViewById(R.id.tv_player_pos);
+            tvPoints = itemView.findViewById(R.id.tv_player_points);
         }
     }
 }

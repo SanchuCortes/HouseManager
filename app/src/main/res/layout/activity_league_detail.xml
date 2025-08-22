@@ -164,6 +164,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
+                android:visibility="gone"
                 app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="8dp">
@@ -308,7 +309,7 @@
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
-                        android:text="💸 Transferencias"
+                        android:text="💸 Mercado"
                         android:textColor="@color/secondary_green"
                         android:textSize="16sp"
                         app:cornerRadius="12dp"

@@ -44,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private ProgressBar progressSync;
     private TextView tvSyncStatus;
     private TextView tvActiveLeagues;
+    private TextView tvIncompleteLineups;
+    private android.widget.LinearLayout llMatchesContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +60,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         initViews();
         setupToolbarAndDrawer();
         setupButtons();
-
+        
+        // Manejar botón atrás con OnBackPressedDispatcher (sin usar API deprecada)
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
+                    Log.d(TAG, "Cerrando navigation drawer");
+                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                } else {
+                    Log.d(TAG, "Usuario presionó botón atrás, cerrando aplicación");
+                    finish();
+                }
+            }
+        });
+        
         // Empezar la carga de datos
         initializeAppData();
 
@@ -76,10 +92,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Elementos de estadísticas
         tvActiveLeagues = findViewById(R.id.tv_active_leagues);
+        tvIncompleteLineups = findViewById(R.id.tv_incomplete_lineups);
 
         // Elementos de progreso (pueden no existir en todos los layouts)
         progressSync = findViewById(R.id.progress_sync);
         tvSyncStatus = findViewById(R.id.tv_sync_status);
+
+        // Contenedor de próximos partidos
+        llMatchesContainer = findViewById(R.id.ll_matches_container);
     }
 
     /**
@@ -122,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Botón para unirse a una liga (por implementar)
         btnJoinLeague.setOnClickListener(v -> {
             Log.d(TAG, "Usuario presionó Unirse a liga");
-            Toast.makeText(this, "Unirse a liga - Esta función estará disponible pronto", Toast.LENGTH_SHORT).show();
+            com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Unirse a liga - Esta función estará disponible pronto", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
         });
 
         // Configurar accesos rápidos para testing
@@ -146,9 +166,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         startActivity(new Intent(this, TransferMarketActivity.class));
                     } else {
                         Log.d(TAG, "No hay jugadores disponibles todavía");
-                        Toast.makeText(this,
+                        com.google.android.material.snackbar.Snackbar.make(v,
                                 "Esperando que se carguen los datos... Prueba en unos segundos",
-                                Toast.LENGTH_LONG).show();
+                                com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
                     }
                 });
                 return true;
@@ -203,6 +223,38 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
+        // Observar métricas del dashboard
+        observeDashboardMetrics();
+
+        // Preparar sección de próximos partidos (sin bloquear la sincronización principal)
+        setupUpcomingMatchesSection();
+
+        // Forzar también la sync de próximos partidos al iniciar (asegura datos frescos)
+        repository.syncUpcomingMatches(null);
+
+        // Activar acción de depuración oculta: long-press en la lista de partidos para recalcular puntos
+        if (llMatchesContainer != null) {
+            llMatchesContainer.setOnLongClickListener(v -> {
+                repository.getCurrentMatchday(new FootballRepository.MatchdayCallback() {
+                    @Override public void onResult(int matchday) {
+                        repository.recomputePointsFromMatches(matchday, new FootballRepository.SyncCallback() {
+                            @Override public void onSuccess() {
+                                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Puntos recalculados para jornada " + matchday, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                            }
+                            @Override public void onError(Throwable t) {
+                                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Error recálculo: " + t.getMessage(), com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                            }
+                            @Override public void onProgress(String message, int current, int total) {}
+                        });
+                    }
+                    @Override public void onError(Throwable t) {
+                        com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "No se pudo obtener jornada actual", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                    }
+                });
+                return true;
+            });
+        }
+
         // Empezar la sincronización
         repository.syncLaLigaTeams(new FootballRepository.SyncCallback() {
             @Override
@@ -211,6 +263,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     Log.d(TAG, "Sincronización completada exitosamente");
                     showSyncCompletedMessage();
                 });
+                // Tras sincronizar equipos/jugadores, sincronizar jornada y recalcular puntos en background
+                repository.syncAndRecalculatePointsForCurrentMatchday(null);
             }
 
             @Override
@@ -286,8 +340,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         "- Mantén pulsado el número de ligas para Mi Equipo\n\n" +
                         "Todo listo para jugar!";
 
-                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-                Log.d(TAG, "Mensaje de sincronización exitosa mostrado al usuario");
+                Log.d(TAG, message);
+                // Mensaje informativo no crítico: registro en logs en lugar de Toast
             }
         });
     }
@@ -300,8 +354,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 "\n\nLa aplicación funcionará con datos limitados.\n" +
                 "Revisa tu conexión a internet e inténtalo más tarde.";
 
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-        Log.d(TAG, "Mensaje de error mostrado al usuario");
+        Log.e(TAG, message);
+        // Error no crítico: registrar en logs (sin Toast)
     }
 
     /**
@@ -321,11 +375,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         } else if (id == R.id.nav_statistics) {
             Log.d(TAG, "Usuario seleccionó Estadísticas (no implementado)");
-            Toast.makeText(this, "Estadísticas - Esta función estará disponible pronto", Toast.LENGTH_SHORT).show();
+            com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Estadísticas - Esta función estará disponible pronto", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
 
         } else if (id == R.id.nav_settings) {
             Log.d(TAG, "Usuario seleccionó Ajustes (no implementado)");
-            Toast.makeText(this, "Ajustes - Esta función estará disponible pronto", Toast.LENGTH_SHORT).show();
+            com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Ajustes - Esta función estará disponible pronto", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
 
         } else if (id == R.id.nav_help) {
             Log.d(TAG, "Usuario seleccionó Ayuda");
@@ -380,25 +434,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      */
     private void forceSyncData() {
         Log.d(TAG, "Forzando nueva sincronización de datos");
-        Toast.makeText(this, "Iniciando nueva sincronización de datos...", Toast.LENGTH_SHORT).show();
+        com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Iniciando nueva sincronización de datos...", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
 
         // Llamar a syncLaLigaTeams sin callback específico
         repository.syncLaLigaTeams(null);
     }
 
-    /**
-     * Maneja el botón de atrás cuando el drawer está abierto
-     */
-    @Override
-    public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            Log.d(TAG, "Cerrando navigation drawer");
-            drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            Log.d(TAG, "Usuario presionó botón atrás, cerrando aplicación");
-            super.onBackPressed();
-        }
-    }
 
     /**
      * Se ejecuta cuando la actividad vuelve a ser visible
@@ -414,13 +455,119 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
      * Actualiza las estadísticas mostradas en el dashboard
      */
     private void updateDashboardStats() {
-        // Actualizar estadísticas del dashboard con datos frescos
+        // Mantener otras métricas si fuese necesario
         repository.getAvailablePlayersCount().observe(this, count -> {
             if (count != null) {
-                Log.d(TAG, "Estadísticas del dashboard actualizadas: " + count + " jugadores");
-                // Aquí podrías actualizar TextViews específicos del dashboard
+                Log.d(TAG, "Estadísticas del mercado: " + count + " jugadores disponibles");
             }
         });
+    }
+
+    /** Observa y pinta métricas reales del dashboard (ligas activas y alineación) */
+    private void observeDashboardMetrics() {
+        // Ligas activas desde Room
+        repository.getActiveLeaguesCount().observe(this, count -> {
+            if (tvActiveLeagues != null && count != null) {
+                tvActiveLeagues.setText(String.valueOf(count));
+            }
+        });
+
+        // Alineación incompleta: usuario 1, jornada 1 (hasta que haya gestión de usuarios/jornadas)
+        repository.isLineupIncomplete(1, 1).observe(this, incomplete -> {
+            if (tvIncompleteLineups != null && incomplete != null) {
+                tvIncompleteLineups.setText(incomplete ? "1" : "0");
+            }
+        });
+    }
+
+    /** Configura/observa la sección de Próximos Partidos en el último card */
+    private void setupUpcomingMatchesSection() {
+        // 1) Intentar por jornada actual
+        repository.getCurrentMatchday(new FootballRepository.MatchdayCallback() {
+            @Override
+            public void onResult(int matchday) {
+                repository.syncMatchday(matchday, new FootballRepository.SyncCallback() {
+                    @Override public void onSuccess() {
+                        // Recalcular puntos tras sincronizar la jornada (actualiza PlayerEntity.totalPoints)
+                        repository.recomputePointsFromMatches(matchday, null);
+                        observeAndRenderMatchdayList();
+                    }
+                    @Override public void onError(Throwable t) { fallbackUpcomingRange(); }
+                    @Override public void onProgress(String message, int current, int total) { }
+                });
+            }
+            @Override
+            public void onError(Throwable t) { fallbackUpcomingRange(); }
+        });
+    }
+
+    private void observeAndRenderMatchdayList() {
+        repository.getMatchdayMatchesLive().observe(this, matches -> renderMatchesList(matches));
+    }
+
+    private void fallbackUpcomingRange() {
+        // 2) Fallback: próximos 10 por fecha
+        repository.syncUpcomingMatches(null); // aseguramos datos en Room si no existían
+        repository.getUpcomingMatches(10).observe(this, matches -> renderMatchesList(matches));
+    }
+
+    private void renderMatchesList(java.util.List<com.example.housemanager.database.entities.MatchEntity> matches) {
+        if (llMatchesContainer == null) return;
+        llMatchesContainer.removeAllViews();
+        if (matches == null || matches.isEmpty()) {
+            // Placeholder
+            TextView tv = new TextView(this);
+            tv.setText("No hay partidos próximos");
+            tv.setTextAppearance(this, R.style.TextSecondary);
+            llMatchesContainer.addView(tv);
+            return;
+        }
+        // Limitar a 10
+        int limit = Math.min(10, matches.size());
+        java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
+        for (int i = 0; i < limit; i++) {
+            com.example.housemanager.database.entities.MatchEntity m = matches.get(i);
+            android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            int padV = (int) (8 * getResources().getDisplayMetrics().density);
+            row.setPadding(0, padV / 2, 0, padV / 2);
+
+            TextView tvTime = new TextView(this);
+            tvTime.setTextAppearance(this, R.style.TextSecondary);
+            tvTime.setTextSize(12);
+            tvTime.setMinWidth((int) (40 * getResources().getDisplayMetrics().density));
+            String timeText = timeFormat.format(new java.util.Date(m.getUtcDateMillis()));
+            tvTime.setText(timeText);
+            android.widget.LinearLayout.LayoutParams lpTime = new android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+            lpTime.rightMargin = (int) (12 * getResources().getDisplayMetrics().density);
+            row.addView(tvTime, lpTime);
+
+            TextView tvDesc = new TextView(this);
+            tvDesc.setTextAppearance(this, R.style.TextBody);
+            tvDesc.setTextSize(14);
+            String home = (m.getHomeTeamName() != null ? m.getHomeTeamName() : "");
+            String away = (m.getAwayTeamName() != null ? m.getAwayTeamName() : "");
+            Integer hs = m.getHomeScore();
+            Integer as = m.getAwayScore();
+            String text;
+            if (hs != null && as != null) {
+                // Partido con marcador
+                text = home + " " + hs + "–" + as + " " + away;
+            } else {
+                // Próximo partido: hora — Home vs Away (hora ya en columna izquierda)
+                text = home + " vs " + away;
+            }
+            tvDesc.setText(text);
+            android.widget.LinearLayout.LayoutParams lpDesc = new android.widget.LinearLayout.LayoutParams(
+                    0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            row.addView(tvDesc, lpDesc);
+
+            llMatchesContainer.addView(row);
+        }
     }
 
     /**

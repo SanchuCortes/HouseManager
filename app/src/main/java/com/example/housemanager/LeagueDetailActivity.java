@@ -13,6 +13,7 @@ import androidx.appcompat.widget.Toolbar;
 public class LeagueDetailActivity extends AppCompatActivity {
 
     private String leagueName;
+    private long leagueId = 1L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,18 +54,35 @@ public class LeagueDetailActivity extends AppCompatActivity {
         tvTeamType.setText(teamType != null ? teamType : "Equipo Vacío");
         tvParticipants.setText(participants + " participantes");
 
+        // Ocultar card de configuración (dejamos visibles solo las acciones rápidas)
+        android.view.View vRules = findViewById(R.id.tv_transfer_rules);
+        android.view.View vGameCfg = findViewById(R.id.tv_game_config);
+        if (vRules != null) vRules.setVisibility(android.view.View.GONE);
+        if (vGameCfg != null) vGameCfg.setVisibility(android.view.View.GONE);
+
         // Ir a Mi equipo (solo navegación).
         btnMyTeam.setOnClickListener(v -> {
             Intent i = new Intent(this, MyTeamActivity.class);
             i.putExtra("EXTRA_LEAGUE_NAME", leagueName);
+            // TODO: Reemplazar 1L con el id real de la liga cuando esté disponible
+            i.putExtra(MyTeamActivity.EXTRA_LEAGUE_ID, 1L);
             startActivity(i);
         });
 
         // Placeholders.
-        btnClass.setOnClickListener(v ->
-                android.widget.Toast.makeText(this, "Clasificación - Próximamente", android.widget.Toast.LENGTH_SHORT).show());
-        btnTransfers.setOnClickListener(v ->
-                android.widget.Toast.makeText(this, "Transferencias - Próximamente", android.widget.Toast.LENGTH_SHORT).show());
+        btnClass.setOnClickListener(v -> {
+                Intent intent = new Intent(this, ClassificationActivity.class);
+                long lid = getIntent().getLongExtra("EXTRA_LEAGUE_ID", 1L);
+                intent.putExtra(ClassificationActivity.EXTRA_LEAGUE_ID, lid);
+                startActivity(intent);
+        });
+        btnTransfers.setOnClickListener(v -> {
+                Intent intent = new Intent(this, TransferMarketActivity.class);
+                // Pasar id de liga si llegó en el intent
+                long lid = getIntent().getLongExtra("EXTRA_LEAGUE_ID", 1L);
+                intent.putExtra("EXTRA_LEAGUE_ID", lid);
+                startActivity(intent);
+        });
     }
 
     @Override

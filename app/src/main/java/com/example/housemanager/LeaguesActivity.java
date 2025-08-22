@@ -66,15 +66,38 @@ public class LeaguesActivity extends AppCompatActivity {
 
     // Cargo ligas mock y actualizo UI.
     private void loadUserLeagues() {
-        List<LeagueManager.League> list = LeagueManager.getInstance().getUserLeagues();
-        if (list == null || list.isEmpty()) {
-            rvLeagues.setVisibility(View.GONE);
-            emptyState.setVisibility(View.VISIBLE);
-        } else {
-            rvLeagues.setVisibility(View.VISIBLE);
-            emptyState.setVisibility(View.GONE);
-            rvLeagues.setAdapter(new LeaguesAdapter(list, this));
-        }
+        // Observar ligas desde Room y actualizar la UI
+        com.example.housemanager.database.HouseManagerDatabase db = com.example.housemanager.database.HouseManagerDatabase.getInstance(getApplicationContext());
+        db.leagueDao().getAllLeagues().observe(this, entities -> {
+            java.util.List<LeagueManager.League> list = new java.util.ArrayList<>();
+            java.util.List<Integer> ids = new java.util.ArrayList<>();
+            if (entities != null) {
+                for (com.example.housemanager.database.entities.LeagueEntity e : entities) {
+                    LeagueManager.League l = new LeagueManager.League(
+                            e.getName(),
+                            e.getType(),
+                            "Privada".equalsIgnoreCase(e.getType()),
+                            e.getBudget(),
+                            e.getMarketHour(),
+                            e.getTeamType(),
+                            e.getParticipants(),
+                            e.getStatus(),
+                            e.getCreatedDate()
+                    );
+                    list.add(l);
+                    ids.add(e.getId());
+                }
+            }
+
+            if (list.isEmpty()) {
+                rvLeagues.setVisibility(View.GONE);
+                emptyState.setVisibility(View.VISIBLE);
+            } else {
+                rvLeagues.setVisibility(View.VISIBLE);
+                emptyState.setVisibility(View.GONE);
+                rvLeagues.setAdapter(new LeaguesAdapter(list, ids, this));
+            }
+        });
     }
 
     @Override

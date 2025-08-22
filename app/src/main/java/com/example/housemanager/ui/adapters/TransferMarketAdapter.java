@@ -42,7 +42,8 @@ public class TransferMarketAdapter extends RecyclerView.Adapter<TransferMarketAd
 
     @Override public void onBindViewHolder(@NonNull VH h, int pos) {
         Player p = players.get(pos);
-        h.tvName.setText(p.getName());
+        // Mostrar nombre + puntos
+        h.tvName.setText(String.format("%s · %d pts", p.getName(), p.getTotalPoints()));
         h.tvTeam.setText(p.getTeamName());
         h.tvPrice.setText(String.format("€ %.1f M", p.getCurrentPrice()));
         h.tvPos.setText(p.getPosition());

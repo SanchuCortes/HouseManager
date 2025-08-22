@@ -42,10 +42,10 @@ public class FootballViewModel extends AndroidViewModel {
             Log.d(TAG, "Equipos actualizados: " + teamAPIs.size());
         });
 
-        // Lo mismo para los jugadores del mercado
-        repository.getAllPlayers().observeForever(players -> {
+        // Lo mismo para los jugadores del mercado (10 aleatorios disponibles)
+        repository.getRandomMarketPlayers().observeForever(players -> {
             marketPlayersLiveData.setValue(players);
-            Log.d(TAG, "Jugadores del mercado actualizados: " + (players != null ? players.size() : 0));
+            Log.d(TAG, "Jugadores del mercado actualizados (random 10): " + (players != null ? players.size() : 0));
         });
     }
 
@@ -57,6 +57,11 @@ public class FootballViewModel extends AndroidViewModel {
 
     public LiveData<List<PlayerAPI>> getSquad() {
         return squadLiveData;
+    }
+
+    // Mi plantilla del usuario en una liga (usando ownership)
+    public LiveData<List<PlayerAPI>> getMyTeamApiPlayers(long leagueId, long ownerUserId) {
+        return repository.getMyTeamApiPlayers(leagueId, ownerUserId);
     }
 
     public LiveData<List<Player>> getMarketPlayers() {

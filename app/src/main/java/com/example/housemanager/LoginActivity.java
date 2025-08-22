@@ -66,7 +66,7 @@ public class LoginActivity extends AppCompatActivity {
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showToast("Registro clickeado");
+                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Registro clickeado", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
                 // Aquí iría la navegación a registro
             }
         });
@@ -74,7 +74,7 @@ public class LoginActivity extends AppCompatActivity {
         tvForgotPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showToast("Recuperar contraseña clickeado");
+                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Recuperar contraseña clickeado", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
                 // Aquí iría la navegación a recuperar contraseña
             }
         });
@@ -86,7 +86,7 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(TAG, "Botón Google Sign-In clickeado");
 
                 // Aquí iría la lógica de Google, pero por ahora navegamos directo
-                showToast("Google Sign-In clickeado");
+                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Google Sign-In clickeado", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
                 goToMainActivity();
             }
         });
@@ -105,6 +105,7 @@ public class LoginActivity extends AppCompatActivity {
 
     // Para mostrar mensajes rápidos (debug)
     private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        // Reemplazado por Snackbar en llamadas de UI
+        Log.d(TAG, message);
     }
 }

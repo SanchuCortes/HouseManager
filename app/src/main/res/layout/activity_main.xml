@@ -330,68 +330,12 @@
 
                         </LinearLayout>
 
-                        <!-- Lista de partidos -->
+                        <!-- Lista de partidos (se poblará dinámicamente) -->
                         <LinearLayout
+                            android:id="@+id/ll_matches_container"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical">
-
-                            <!-- Partido 1 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical"
-                                android:layout_marginBottom="8dp">
-
-                                <TextView
-                                    style="@style/TextSecondary"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="HOY 21:00"
-                                    android:textStyle="bold"
-                                    android:textColor="@color/secondary_green"
-                                    android:textSize="12sp"
-                                    android:layout_marginEnd="12dp"
-                                    android:minWidth="80dp" />
-
-                                <TextView
-                                    style="@style/TextBody"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Real Madrid vs Barcelona"
-                                    android:textSize="14sp" />
-
-                            </LinearLayout>
-
-                            <!-- Partido 2 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
-
-                                <TextView
-                                    style="@style/TextSecondary"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="MAÑ 16:15"
-                                    android:textSize="12sp"
-                                    android:layout_marginEnd="12dp"
-                                    android:minWidth="80dp" />
-
-                                <TextView
-                                    style="@style/TextBody"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Atlético vs Sevilla"
-                                    android:textSize="14sp" />
-
-                            </LinearLayout>
-
-                        </LinearLayout>
+                            android:orientation="vertical" />
 
                     </LinearLayout>
 

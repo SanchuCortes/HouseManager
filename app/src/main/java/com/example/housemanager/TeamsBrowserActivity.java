@@ -53,7 +53,7 @@ public class TeamsBrowserActivity extends AppCompatActivity implements TeamsList
             if (teams != null && !teams.isEmpty()) {
                 adapter.submit(teams);
             } else {
-                Toast.makeText(this, "No hay equipos disponibles", Toast.LENGTH_SHORT).show();
+                android.util.Log.d("TeamsBrowserActivity", "No hay equipos disponibles");
             }
         });
 
@@ -63,7 +63,8 @@ public class TeamsBrowserActivity extends AppCompatActivity implements TeamsList
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
+        // Use modern back handling instead of deprecated onBackPressed
+        finish();
         return true;
     }
 

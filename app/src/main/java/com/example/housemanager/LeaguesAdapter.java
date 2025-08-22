@@ -16,10 +16,12 @@ import java.util.List;
 public class LeaguesAdapter extends RecyclerView.Adapter<LeaguesAdapter.LeagueViewHolder> {
 
     private final List<LeagueManager.League> leagues;
+    private final List<Integer> leagueIds;
     private final Context context;
 
-    public LeaguesAdapter(List<LeagueManager.League> leagues, Context context) {
+    public LeaguesAdapter(List<LeagueManager.League> leagues, List<Integer> leagueIds, Context context) {
         this.leagues = leagues;
+        this.leagueIds = leagueIds;
         this.context = context;
     }
 
@@ -48,6 +50,10 @@ public class LeaguesAdapter extends RecyclerView.Adapter<LeaguesAdapter.LeagueVi
             i.putExtra("EXTRA_MARKET_HOUR", league.getMarketHour());
             i.putExtra("EXTRA_TEAM_TYPE", league.getTeamType());
             i.putExtra("EXTRA_PARTICIPANTS", league.getParticipants());
+            // Pasar el id real de la liga si está disponible
+            if (leagueIds != null && position < leagueIds.size()) {
+                i.putExtra("EXTRA_LEAGUE_ID", leagueIds.get(position).longValue());
+            }
             context.startActivity(i);
         });
     }

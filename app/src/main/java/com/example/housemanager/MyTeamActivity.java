@@ -23,6 +23,7 @@ import java.util.List;
 public class MyTeamActivity extends AppCompatActivity {
 
     public static final String EXTRA_TEAM_ID = "team_id";
+    public static final String EXTRA_LEAGUE_ID = "EXTRA_LEAGUE_ID";
     public static final String EXTRA_LEAGUE_NAME = "EXTRA_LEAGUE_NAME";
 
     private FootballViewModel vm;
@@ -36,6 +37,7 @@ public class MyTeamActivity extends AppCompatActivity {
     private MaterialButton btnSetCaptain;
 
     private int teamId = -1;
+    private long leagueId = 1L;
     private String leagueName = "Mi Liga Fantasy";
     private int currentCaptainId = -1;
     private final List<PlayerAPI> currentSquad = new ArrayList<>();
@@ -49,13 +51,14 @@ public class MyTeamActivity extends AppCompatActivity {
         initViews();
         setupToolbar();
         setupRecyclerView();
+
+        // Obtener datos del intent (antes de configurar observers)
+        getIntentData();
+
         setupButtons();
         setupViewModel();
 
-        // Obtener datos del intent
-        getIntentData();
-
-        // Cargar datos
+        // Cargar datos (observados desde ViewModel)
         loadTeamData();
     }
 
@@ -91,9 +94,9 @@ public class MyTeamActivity extends AppCompatActivity {
             recalculatePoints();
 
             // Mostrar feedback al usuario
-            android.widget.Toast.makeText(this,
+            com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content),
                     "Capitán asignado: " + player.getName(),
-                    android.widget.Toast.LENGTH_SHORT).show();
+                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
         });
 
         recyclerView.setAdapter(adapter);
@@ -103,6 +106,8 @@ public class MyTeamActivity extends AppCompatActivity {
         // Botón Transferencias
         btnTransfers.setOnClickListener(v -> {
             Intent intent = new Intent(this, TransferMarketActivity.class);
+            // TODO: Reemplazar 1L con el id real de la liga actual del usuario
+            intent.putExtra("EXTRA_LEAGUE_ID", 1L);
             startActivity(intent);
         });
 
@@ -117,8 +122,8 @@ public class MyTeamActivity extends AppCompatActivity {
     private void setupViewModel() {
         vm = new ViewModelProvider(this).get(FootballViewModel.class);
 
-        // Observer para la plantilla
-        vm.getSquad().observe(this, players -> {
+        // Observer para la plantilla (propiedad en liga)
+        vm.getMyTeamApiPlayers(leagueId, 1L).observe(this, players -> {
             currentSquad.clear();
             if (players != null && !players.isEmpty()) {
                 currentSquad.addAll(players);
@@ -131,10 +136,10 @@ public class MyTeamActivity extends AppCompatActivity {
                 recalculatePoints();
                 updateTeamStats();
             } else {
-                // No hay jugadores, mostrar mensaje
-                android.widget.Toast.makeText(this,
-                        "Aún no tienes jugadores. Ve al mercado de fichajes.",
-                        android.widget.Toast.LENGTH_LONG).show();
+                android.util.Log.d("MyTeamActivity", "Aún no tienes jugadores. Ve al mercado de fichajes.");
+                adapter.submit(new java.util.ArrayList<>());
+                recalculatePoints();
+                updateTeamStats();
             }
         });
     }
@@ -142,6 +147,7 @@ public class MyTeamActivity extends AppCompatActivity {
     private void getIntentData() {
         // Obtener datos del intent
         teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, 1); // Default team ID = 1
+        leagueId = getIntent().getLongExtra(EXTRA_LEAGUE_ID, 1L);
         leagueName = getIntent().getStringExtra(EXTRA_LEAGUE_NAME);
 
         if (leagueName != null) {
@@ -150,40 +156,10 @@ public class MyTeamActivity extends AppCompatActivity {
     }
 
     private void loadTeamData() {
-        if (teamId != -1) {
-            // Cargar plantilla del equipo
-            vm.loadSquad(teamId);
-        } else {
-            // Usar un equipo por defecto o mostrar datos mock
-            loadMockTeamData();
-        }
-    }
-
-    private void loadMockTeamData() {
-        // Datos mock para mostrar algo mientras no hay datos reales
-        List<PlayerAPI> mockPlayers = createMockPlayers();
-        currentSquad.clear();
-        currentSquad.addAll(mockPlayers);
-        adapter.submit(mockPlayers);
-
-        currentCaptainId = CaptainManager.getCaptain(this, 1);
-        adapter.setCaptainId(currentCaptainId);
-
+        // La lista se actualizará automáticamente por el observer de ownership
+        // aquí solo recalculamos/actualizamos el header si fuese necesario
         recalculatePoints();
         updateTeamStats();
-    }
-
-    private List<PlayerAPI> createMockPlayers() {
-        List<PlayerAPI> mockPlayers = new ArrayList<>();
-
-        // Crear algunos jugadores mock para demostración
-        mockPlayers.add(new PlayerAPI(1, "Ter Stegen", "Portero", "Alemania", 75));
-        mockPlayers.add(new PlayerAPI(2, "Piqué", "Defensa", "España", 65));
-        mockPlayers.add(new PlayerAPI(3, "Busquets", "Medio", "España", 80));
-        mockPlayers.add(new PlayerAPI(4, "Lewandowski", "Delantero", "Polonia", 95));
-        mockPlayers.add(new PlayerAPI(5, "Pedri", "Medio", "España", 70));
-
-        return mockPlayers;
     }
 
     private void recalculatePoints() {
@@ -231,10 +207,10 @@ public class MyTeamActivity extends AppCompatActivity {
             }
         }
 
-        android.widget.Toast.makeText(this,
+        com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content),
                 "Capitán actual: " + captainName +
                         "\n\nToca un jugador para asignarlo como capitán",
-                android.widget.Toast.LENGTH_LONG).show();
+                com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
     }
 
     @Override

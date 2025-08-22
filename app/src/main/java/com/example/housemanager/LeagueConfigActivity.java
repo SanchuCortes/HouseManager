@@ -171,12 +171,12 @@ public class LeagueConfigActivity extends AppCompatActivity {
         LeagueManager.League newLeague = saveLeague(leagueName, budget, marketHour, teamType);
 
         if (newLeague != null) {
-            // Mostrar mensaje de éxito
-            Toast.makeText(this,
+            // Mostrar mensaje de éxito mediante Snackbar
+            com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content),
                     "¡Liga '" + leagueName + "' creada con éxito!\n" +
                             "Presupuesto: " + budget + "\n" +
                             "Hora mercado: " + marketHour,
-                    Toast.LENGTH_LONG).show();
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG).show();
 
             // Volver a la pantalla de ligas
             Intent intent = new Intent(this, LeaguesActivity.class);
@@ -184,7 +184,7 @@ public class LeagueConfigActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         } else {
-            Toast.makeText(this, "Error al crear la liga. Inténtalo de nuevo.", Toast.LENGTH_SHORT).show();
+            com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Error al crear la liga. Inténtalo de nuevo.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
         }
     }
 
@@ -210,6 +210,7 @@ public class LeagueConfigActivity extends AppCompatActivity {
         try {
             // Crear y guardar la liga usando LeagueManager
             LeagueManager.League newLeague = LeagueManager.getInstance().createLeague(
+                    getApplicationContext(),
                     name,
                     budget,
                     marketHour,

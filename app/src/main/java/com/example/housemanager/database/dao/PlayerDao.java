@@ -70,9 +70,17 @@ public interface PlayerDao {
     @Query("SELECT * FROM players WHERE position = 'Delantero' AND available = 1 ORDER BY totalPoints DESC")
     LiveData<List<PlayerEntity>> getAvailableDelanteros();
 
+    /** Devuelve 10 jugadores aleatorios disponibles para el mercado. */
+    @Query("SELECT * FROM players WHERE available = 1 ORDER BY RANDOM() LIMIT 10")
+    LiveData<List<PlayerEntity>> getRandomAvailablePlayers();
+
     /** Conteo síncrono para decisiones de sincronización. */
     @Query("SELECT COUNT(*) FROM players")
     int getPlayersCountSync();
+
+    /** Jugadores no poseídos en una liga concreta (consulta síncrona). */
+    @Query("SELECT p.* FROM players p WHERE NOT EXISTS (SELECT 1 FROM LeaguePlayerOwnership o WHERE o.leagueId = :leagueId AND o.playerId = p.playerId)")
+    List<com.example.housemanager.database.entities.PlayerEntity> getAllNotOwnedSync(long leagueId);
 
     /** Marca un jugador como comprado (no disponible). */
     @Query("UPDATE players SET available = 0 WHERE playerId = :playerId")
@@ -81,4 +89,24 @@ public interface PlayerDao {
     /** Marca un jugador como disponible (en venta). */
     @Query("UPDATE players SET available = 1 WHERE playerId = :playerId")
     void markAsAvailable(int playerId);
+
+    /** Obtiene jugadores por IDs de forma síncrona. */
+    @Query("SELECT * FROM players WHERE playerId IN (:ids)")
+    java.util.List<PlayerEntity> getByIdsSync(java.util.List<Integer> ids);
+
+    /** Obtiene jugadores de un equipo (sync). */
+    @Query("SELECT * FROM players WHERE teamId = :teamId")
+    java.util.List<PlayerEntity> getByTeamSync(int teamId);
+
+    /** Suma puntos a todos los jugadores de un equipo. */
+    @Query("UPDATE players SET totalPoints = totalPoints + :points WHERE teamId = :teamId")
+    void addPointsToTeam(int teamId, int points);
+
+    /** Reinicia los puntos de todos los jugadores. */
+    @Query("UPDATE players SET totalPoints = 0")
+    void resetAllPoints();
+
+    /** Establece el total de puntos absoluto para un jugador. */
+    @Query("UPDATE players SET totalPoints = :total WHERE playerId = :playerId")
+    void updateTotalPoints(int playerId, int total);
 }

@@ -79,7 +79,7 @@ public class TeamDetailActivity extends AppCompatActivity implements PlayersSimp
             adapter = new PlayersSimpleAdapter(this);
             recyclerView.setAdapter(adapter);
         } else {
-            Toast.makeText(this, "Error: RecyclerView no encontrado", Toast.LENGTH_SHORT).show();
+            android.util.Log.e("TeamDetail", "Error: RecyclerView no encontrado");
             finish();
             return;
         }
@@ -94,7 +94,7 @@ public class TeamDetailActivity extends AppCompatActivity implements PlayersSimp
                 adapter.submit(players);
                 android.util.Log.d("TeamDetail", "Plantilla cargada: " + players.size() + " jugadores");
             } else {
-                Toast.makeText(this, "No se encontraron jugadores para este equipo", Toast.LENGTH_SHORT).show();
+                android.util.Log.d("TeamDetail", "No se encontraron jugadores para este equipo");
             }
         });
     }
@@ -121,7 +121,7 @@ public class TeamDetailActivity extends AppCompatActivity implements PlayersSimp
             viewModel.loadSquad(teamId);
             android.util.Log.d("TeamDetail", "Cargando plantilla del equipo: " + teamId);
         } else {
-            Toast.makeText(this, "ID de equipo no válido", Toast.LENGTH_SHORT).show();
+            android.util.Log.e("TeamDetail", "ID de equipo no válido");
         }
     }
 

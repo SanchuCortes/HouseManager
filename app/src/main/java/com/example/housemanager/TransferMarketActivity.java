@@ -45,6 +45,9 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
     private Handler updateHandler;
     private Runnable updateRunnable;
 
+    // Liga actual (por defecto 1 hasta tener selección real de liga)
+    private long leagueId = 1L;
+
     // Elementos de la pantalla
     private RecyclerView recyclerView;
     private EditText etSearch;
@@ -72,21 +75,24 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
         repository = FootballRepository.getInstance(this);
         viewModel = new ViewModelProvider(this).get(FootballViewModel.class);
 
+        // Leer leagueId del intent (por ahora default=1 si no se envía)
+        leagueId = getIntent().getLongExtra("EXTRA_LEAGUE_ID", 1L);
+
         initViews();
         setupToolbar();
         setupRecyclerView();
         setupFilters();
         setupObservers();
 
-        // Configurar el timer para el countdown
+        // Configurar el timer para el countdown (solo UI)
         updateHandler = new Handler();
         updateRunnable = this::updateCountdown;
-
-        // Programar próxima actualización (24 horas)
-        scheduleNextUpdate();
         startCountdownUpdates();
 
-        // Generar mercado inicial
+        // Asegurar mercado generado (no regenera si no ha expirado)
+        repository.ensureLeagueMarketGenerated(leagueId, null);
+
+        // Lanzar sincronización de datos base si es necesario (equipos/jugadores)
         generateInitialMarket();
     }
 
@@ -142,19 +148,36 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
         // Filtro por posición
         spinnerPosition.setOnItemSelectedListener(new SimpleItemSelectedListener(() -> applyFilters()));
 
-        // Botón para generar nuevo mercado manualmente
+        // Botón para refrescar estado del mercado (no regenera si no ha expirado)
         btnRefresh.setOnClickListener(v -> {
-            generateNewMarket();
-            Toast.makeText(this, "¡Nuevo mercado generado!", Toast.LENGTH_SHORT).show();
+            repository.ensureLeagueMarketGenerated(leagueId, new FootballRepository.SyncCallback() {
+                @Override public void onSuccess() {
+                    com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Mercado verificado", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                }
+                @Override public void onError(Throwable t) {
+                    com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Error al verificar mercado: " + t.getMessage(), com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                }
+                @Override public void onProgress(String message, int current, int total) { }
+            });
         });
     }
 
     private void setupObservers() {
-        // Escuchar cuando lleguen jugadores del repositorio
-        repository.getAllPlayers().observe(this, players -> {
-            if (players != null && !players.isEmpty() && allMarketPlayers.isEmpty()) {
-                // Solo generar si no tenemos mercado aún
-                generateMarketFromPlayers(players);
+        // Listado del mercado por liga (no repone hasta expiración)
+        repository.getLeagueMarketPlayers(leagueId).observe(this, players -> {
+            allMarketPlayers.clear();
+            if (players != null) {
+                allMarketPlayers.addAll(players);
+            }
+            applyFilters();
+            updateMarketStatus();
+        });
+
+        // Countdown: observar estado del mercado (expiración)
+        repository.getMarketStateLive(leagueId).observe(this, state -> {
+            if (state != null) {
+                nextUpdateTime = state.getMarketExpiresAtMillis();
+                updateCountdown();
             }
         });
 
@@ -173,46 +196,20 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
         viewModel.loadTeams();
     }
 
-    private void generateMarketFromPlayers(List<Player> allPlayers) {
-        List<Player> availablePlayers = new ArrayList<>();
-
-        // Solo jugadores disponibles
-        for (Player player : allPlayers) {
-            if (player.isAvailable()) {
-                availablePlayers.add(player);
-            }
-        }
-
-        if (availablePlayers.size() < MARKET_PLAYERS_COUNT) {
-            Toast.makeText(this, "No hay suficientes jugadores", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Elegir 10 al azar
-        Collections.shuffle(availablePlayers);
+    private void generateMarketFromPlayers(List<Player> players) {
+        // Ya vienen aleatorios y disponibles desde Room
         allMarketPlayers.clear();
-        allMarketPlayers.addAll(availablePlayers.subList(0, MARKET_PLAYERS_COUNT));
-
+        if (players != null) {
+            allMarketPlayers.addAll(players);
+        }
         applyFilters();
         updateMarketStatus();
-
-        android.util.Log.d(TAG, "Mercado generado con " + allMarketPlayers.size() + " jugadores");
+        android.util.Log.d(TAG, "Mercado generado con " + allMarketPlayers.size() + " jugadores (random desde DB)");
     }
 
     private void generateNewMarket() {
-        // Obtener nuevos jugadores
-        repository.getAllPlayers().observe(this, new androidx.lifecycle.Observer<List<Player>>() {
-            @Override
-            public void onChanged(List<Player> players) {
-                if (players != null && !players.isEmpty()) {
-                    generateMarketFromPlayers(players);
-                    // Quitar observer para no duplicar
-                    repository.getAllPlayers().removeObserver(this);
-                }
-            }
-        });
-
-        scheduleNextUpdate(); // Reprogramar siguiente
+        // Ya no se genera un mercado nuevo manualmente; se verifica estado por ensureLeagueMarketGenerated
+        repository.ensureLeagueMarketGenerated(leagueId, null);
     }
 
     private void scheduleNextUpdate() {
@@ -222,7 +219,7 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
         // Programar actualización automática
         updateHandler.postDelayed(() -> {
             generateNewMarket();
-            Toast.makeText(this, "¡Mercado actualizado automáticamente!", Toast.LENGTH_LONG).show();
+            android.util.Log.d(TAG, "¡Mercado actualizado automáticamente!");
         }, 24 * 60 * 60 * 1000); // 24 horas
     }
 
@@ -348,7 +345,7 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
 
     private void showBuyDialog(Player player) {
         if (!isMarketOpen) {
-            Toast.makeText(this, "El mercado está cerrado", Toast.LENGTH_SHORT).show();
+            com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "El mercado está cerrado", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
             return;
         }
 
@@ -372,13 +369,13 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
 
     private void buyPlayer(Player player) {
         // Marcar como no disponible en la BD
-        repository.buyPlayer(player.getPlayerId(), new FootballRepository.SyncCallback() {
+        repository.buyPlayer(leagueId, player.getPlayerId(), 1L, new FootballRepository.SyncCallback() {
             @Override
             public void onSuccess() {
                 runOnUiThread(() -> {
-                    Toast.makeText(TransferMarketActivity.this,
+                    com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content),
                             "¡Has fichado a " + player.getName() + "! 🎉",
-                            Toast.LENGTH_SHORT).show();
+                            com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
 
                     // Quitar de la lista actual
                     allMarketPlayers.remove(player);
@@ -390,9 +387,10 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
             @Override
             public void onError(Throwable t) {
                 runOnUiThread(() -> {
-                    Toast.makeText(TransferMarketActivity.this,
+                    android.util.Log.e(TAG, "Error al fichar: " + t.getMessage(), t);
+                    com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content),
                             "Error al fichar: " + t.getMessage(),
-                            Toast.LENGTH_SHORT).show();
+                            com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
                 });
             }
 
