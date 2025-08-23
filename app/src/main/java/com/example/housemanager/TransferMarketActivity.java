@@ -66,6 +66,7 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
     // Estado del mercado
     private boolean isMarketOpen = true;
     private long nextUpdateTime = 0;
+    private int currentPlayersCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,9 +90,6 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
         updateRunnable = this::updateCountdown;
         startCountdownUpdates();
 
-        // Asegurar mercado generado (no regenera si no ha expirado)
-        repository.ensureLeagueMarketGenerated(leagueId, null);
-
         // Lanzar sincronización de datos base si es necesario (equipos/jugadores)
         generateInitialMarket();
     }
@@ -109,11 +107,18 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
 
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Mercado de Fichajes");
+        if (toolbar != null) {
+            try {
+                setSupportActionBar(toolbar);
+            } catch (Exception e) {
+                android.util.Log.w("TransferMarketActivity", "Error al configurar toolbar", e);
+            }
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setTitle("Mercado de Fichajes");
+            }
+        } else {
+            android.util.Log.w("TransferMarketActivity", "Toolbar no encontrada en el layout");
         }
     }
 
@@ -148,29 +153,39 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
         // Filtro por posición
         spinnerPosition.setOnItemSelectedListener(new SimpleItemSelectedListener(() -> applyFilters()));
 
-        // Botón para refrescar estado del mercado (no regenera si no ha expirado)
+        // Botón "Actualizar": si no hay jugadores -> FULL_SYNC; si hay -> solo reconsultar Room (LiveData ya observa)
         btnRefresh.setOnClickListener(v -> {
-            repository.ensureLeagueMarketGenerated(leagueId, new FootballRepository.SyncCallback() {
-                @Override public void onSuccess() {
-                    com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Mercado verificado", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
-                }
-                @Override public void onError(Throwable t) {
-                    com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Error al verificar mercado: " + t.getMessage(), com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
-                }
-                @Override public void onProgress(String message, int current, int total) { }
-            });
+            if (currentPlayersCount <= 0) {
+                repository.forceSyncFromAPI(new FootballRepository.SyncCallback() {
+                    @Override public void onSuccess() {
+                        com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Datos sincronizados desde la API", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                    }
+                    @Override public void onError(Throwable t) {
+                        com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Error al sincronizar: " + t.getMessage(), com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                    }
+                    @Override public void onProgress(String message, int current, int total) { }
+                });
+            } else {
+                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Actualizado desde Room", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                // No hacemos nada más: LiveData ya reconsulta automáticamente la DB
+            }
         });
     }
 
     private void setupObservers() {
-        // Listado del mercado por liga (no repone hasta expiración)
-        repository.getLeagueMarketPlayers(leagueId).observe(this, players -> {
+        // Listado del mercado: 10 aleatorios desde Room
+        repository.getMarketPlayers().observe(this, players -> {
             allMarketPlayers.clear();
             if (players != null) {
                 allMarketPlayers.addAll(players);
             }
             applyFilters();
             updateMarketStatus();
+        });
+
+        // Contador de jugadores disponibles para decidir si refrescar hace FULL_SYNC o no
+        repository.getAvailablePlayersCount().observe(this, count -> {
+            currentPlayersCount = count != null ? count : 0;
         });
 
         // Countdown: observar estado del mercado (expiración)
@@ -368,19 +383,15 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
     }
 
     private void buyPlayer(Player player) {
-        // Marcar como no disponible en la BD
-        repository.buyPlayer(leagueId, player.getPlayerId(), 1L, new FootballRepository.SyncCallback() {
+        // Marcar como no disponible en la BD (sin reponer automáticamente)
+        repository.buyPlayer(player.getPlayerId(), new FootballRepository.SyncCallback() {
             @Override
             public void onSuccess() {
                 runOnUiThread(() -> {
                     com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content),
                             "¡Has fichado a " + player.getName() + "! 🎉",
                             com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
-
-                    // Quitar de la lista actual
-                    allMarketPlayers.remove(player);
-                    applyFilters();
-                    updateMarketStatus();
+                    // No manipulamos la lista manualmente; el observer de Room actualizará el RecyclerView
                 });
             }
 

@@ -23,6 +23,14 @@ public interface PlayerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertPlayer(PlayerEntity player);
 
+    /** Inserta ignorando conflictos: devuelve ids o -1 si ya existían. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    long[] insertIgnore(List<PlayerEntity> players);
+
+    /** Actualiza SOLO campos de ficha sin tocar totalPoints ni available. */
+    @Query("UPDATE players SET name=:name, teamId=:teamId, teamName=:teamName, position=:position, nationality=:nationality, currentPrice=:currentPrice, updatedAt=:updatedAt WHERE playerId=:playerId")
+    void updateFromApiWithoutPoints(long playerId, String name, int teamId, String teamName, String position, String nationality, int currentPrice, long updatedAt);
+
     /** Actualiza un jugador. */
     @Update
     void updatePlayer(PlayerEntity player);
@@ -70,9 +78,37 @@ public interface PlayerDao {
     @Query("SELECT * FROM players WHERE position = 'Delantero' AND available = 1 ORDER BY totalPoints DESC")
     LiveData<List<PlayerEntity>> getAvailableDelanteros();
 
-    /** Devuelve 10 jugadores aleatorios disponibles para el mercado. */
+    /** Devuelve 10 jugadores aleatorios disponibles para el mercado (legacy). */
     @Query("SELECT * FROM players WHERE available = 1 ORDER BY RANDOM() LIMIT 10")
     LiveData<List<PlayerEntity>> getRandomAvailablePlayers();
+
+    /** Mercado: lista del día (estable), ordenada por nombre. */
+    @Query("SELECT * FROM players WHERE available = 1 ORDER BY name ASC")
+    LiveData<List<PlayerEntity>> getMarketToday();
+
+    /** Limpiar mercado: marcar todos como no disponibles. */
+    @Query("UPDATE players SET available = 0")
+    void clearMarket();
+
+    /** Marcar no disponible (alias) */
+    @Query("UPDATE players SET available = 0 WHERE playerId = :playerId")
+    void markUnavailable(long playerId);
+
+    /** Marcar disponibles por lote. */
+    @Query("UPDATE players SET available = 1 WHERE playerId IN (:ids)")
+    void markAvailableInIds(java.util.List<Integer> ids);
+
+    /** Obtener IDs aleatorios de jugadores (sync). */
+    @Query("SELECT playerId FROM players ORDER BY RANDOM() LIMIT :limit")
+    java.util.List<Integer> getRandomPlayerIdsSync(int limit);
+
+    /** Mercado: 10 jugadores aleatorios disponibles (LiveData). */
+    @Query("SELECT * FROM players WHERE available = 1 ORDER BY RANDOM() LIMIT 10")
+    LiveData<List<PlayerEntity>> getMarketRandom10();
+
+    /** Mercado: 10 jugadores aleatorios disponibles (sync). */
+    @Query("SELECT * FROM players WHERE available = 1 ORDER BY RANDOM() LIMIT 10")
+    java.util.List<PlayerEntity> getMarketRandom10Sync();
 
     /** Conteo síncrono para decisiones de sincronización. */
     @Query("SELECT COUNT(*) FROM players")
@@ -89,6 +125,10 @@ public interface PlayerDao {
     /** Marca un jugador como disponible (en venta). */
     @Query("UPDATE players SET available = 1 WHERE playerId = :playerId")
     void markAsAvailable(int playerId);
+
+    /** Marca como no disponibles a todos los jugadores cuyo id NO esté en la lista (para bajas tras sync). */
+    @Query("UPDATE players SET available = 0 WHERE playerId NOT IN (:ids)")
+    void markUnavailableNotInIds(java.util.List<Integer> ids);
 
     /** Obtiene jugadores por IDs de forma síncrona. */
     @Query("SELECT * FROM players WHERE playerId IN (:ids)")
@@ -109,4 +149,8 @@ public interface PlayerDao {
     /** Establece el total de puntos absoluto para un jugador. */
     @Query("UPDATE players SET totalPoints = :total WHERE playerId = :playerId")
     void updateTotalPoints(int playerId, int total);
+
+    /** Overload por si se llama con long. */
+    @Query("UPDATE players SET totalPoints = :total WHERE playerId = :playerId")
+    void updateTotalPoints(long playerId, int total);
 }

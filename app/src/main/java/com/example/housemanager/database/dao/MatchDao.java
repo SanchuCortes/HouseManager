@@ -34,8 +34,8 @@ public interface MatchDao {
     @Query("SELECT * FROM matches ORDER BY utcDateMillis ASC LIMIT 10")
     LiveData<List<MatchEntity>> getMatchdayMatchesLive();
 
-    /** Devuelve los 10 partidos (lo que haya) ordenados por fecha. Útil tras sync de jornada. */
-    @Query("SELECT * FROM matches ORDER BY utcDateMillis ASC LIMIT 10")
+    /** Devuelve los 10 partidos (lo que haya) con fecha válida, ordenados por fecha. Útil tras sync de jornada. */
+    @Query("SELECT * FROM matches WHERE utcDateMillis > 0 ORDER BY utcDateMillis ASC LIMIT 10")
     LiveData<List<MatchEntity>> getUpcoming10();
 
     /** Devuelve todos los partidos de forma síncrona (para cálculo de puntos). */

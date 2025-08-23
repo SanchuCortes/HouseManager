@@ -28,10 +28,18 @@ public class LeaguesActivity extends AppCompatActivity {
 
         // Toolbar básica con back.
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Mis Ligas");
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (toolbar != null) {
+            try {
+                setSupportActionBar(toolbar);
+            } catch (Exception e) {
+                android.util.Log.w("LeaguesActivity", "Error al configurar toolbar", e);
+            }
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setTitle("Mis Ligas");
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            }
+        } else {
+            android.util.Log.w("LeaguesActivity", "Toolbar no encontrada en el layout");
         }
 
         rvLeagues = findViewById(R.id.recycler_view_leagues);

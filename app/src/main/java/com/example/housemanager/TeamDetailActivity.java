@@ -59,11 +59,18 @@ public class TeamDetailActivity extends AppCompatActivity implements PlayersSimp
 
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle(teamName);
+        if (toolbar != null) {
+            try {
+                setSupportActionBar(toolbar);
+            } catch (Exception e) {
+                android.util.Log.w("TeamDetailActivity", "Error al configurar toolbar", e);
+            }
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setTitle(teamName);
+            }
+        } else {
+            android.util.Log.w("TeamDetailActivity", "Toolbar no encontrada en el layout");
         }
     }
 

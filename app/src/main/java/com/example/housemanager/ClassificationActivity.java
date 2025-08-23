@@ -37,10 +37,18 @@ public class ClassificationActivity extends AppCompatActivity {
 
         // Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Clasificación");
+        if (toolbar != null) {
+            try {
+                setSupportActionBar(toolbar);
+            } catch (Exception e) {
+                android.util.Log.w("ClassificationActivity", "Error al configurar toolbar", e);
+            }
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setTitle("Clasificación");
+            }
+        } else {
+            android.util.Log.w("ClassificationActivity", "Toolbar no encontrada en el layout");
         }
 
         leagueId = getIntent().getLongExtra(EXTRA_LEAGUE_ID, 1L);

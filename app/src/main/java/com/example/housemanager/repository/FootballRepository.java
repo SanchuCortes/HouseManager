@@ -31,7 +31,6 @@ import com.example.housemanager.database.pojo.ManagerScoreRow;
 import com.example.housemanager.repository.models.ManagerScore;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -61,7 +60,7 @@ public class FootballRepository {
     private static final String PREF_LAST_SYNC = "last_full_sync";
     private static final String PREF_TEAMS_SYNCED = "teams_synced";
     private static final String PREF_PLAYERS_SYNCED = "players_synced";
-    private static final long SYNC_INTERVAL_DAYS = 7;
+    private static final long SYNC_INTERVAL_DAYS = 1;
 
     /** Notifica estado de sincronización. */
     public interface SyncCallback {
@@ -92,6 +91,8 @@ public class FootballRepository {
     private final FootballApiService apiService;
     private final ExecutorService executor;
     private final SharedPreferences syncPrefs;
+    // Preferencias para selección diaria del mercado (por jugadores.available)
+    private static final String PREF_MARKET_DAY = "market_day";
 
     private final MutableLiveData<Boolean> isSyncing = new MutableLiveData<>(false);
     private final MutableLiveData<String> syncStatus = new MutableLiveData<>("");
@@ -513,6 +514,7 @@ public class FootballRepository {
     /** Sincroniza partidos próximos de la semana desde la API y los guarda en Room. */
     public void syncUpcomingMatches(@Nullable SyncCallback callback) {
         // Construir rango [hoy .. hoy+7] en ISO yyyy-MM-dd
+        Log.d(TAG, "Descargando próximos partidos...");
         String from = buildIsoDate(0);
         String to = buildIsoDate(7);
         Log.d(TAG, "Descargando próximos partidos: " + from + " -> " + to);
@@ -557,10 +559,20 @@ public class FootballRepository {
         );
     }
 
-    /** 10 jugadores aleatorios disponibles para el mercado. */
+    /** 10 jugadores aleatorios disponibles para el mercado (legacy). */
     public LiveData<List<Player>> getRandomMarketPlayers() {
         return Transformations.map(
                 playerDao.getRandomAvailablePlayers(),
+                this::convertPlayerEntitiesToMarketPlayers
+        );
+    }
+
+    /** Mercado diario fijo: asegura selección del día y expone los disponibles ordenados por nombre. */
+    public LiveData<List<Player>> getMarketPlayers() {
+        // Asegurar selección diaria en background (no bloquea la observación de LiveData)
+        ensureDailyMarketSelectionIfNeeded();
+        return Transformations.map(
+                playerDao.getMarketToday(),
                 this::convertPlayerEntitiesToMarketPlayers
         );
     }
@@ -663,6 +675,23 @@ public class FootballRepository {
     public void buyPlayer(int playerId, @Nullable SyncCallback callback) {
         executor.execute(() -> {
             try {
+                // Asignar propiedad por defecto a la liga 1 y usuario 1 (alineado con MyTeamActivity)
+                long leagueId = 1L;
+                long ownerUserId = 1L;
+
+                // Insertar propiedad en la liga
+                com.example.housemanager.database.entities.LeaguePlayerOwnership own = new com.example.housemanager.database.entities.LeaguePlayerOwnership();
+                own.setLeagueId(leagueId);
+                own.setPlayerId(playerId);
+                own.setOwnerUserId(ownerUserId);
+                own.setAcquiredPrice(0);
+                own.setAcquiredAtMillis(System.currentTimeMillis());
+                ownershipDao.insert(own);
+
+                // Marcar listing como vendido si existía en el mercado de la liga 1
+                try { marketDao.markSold(leagueId, playerId); } catch (Exception ignored) { }
+
+                // Marcar jugador como no disponible (no reponer)
                 playerDao.markAsBought(playerId);
                 if (callback != null) runOnMainThread(callback::onSuccess);
             } catch (Exception e) {
@@ -734,9 +763,6 @@ public class FootballRepository {
                         // aquí simplificamos: se fuerza full para completar
                         performFullSync(callback);
                         break;
-                    case MOCK_FALLBACK:
-                        generateMockDataAsFallback(callback);
-                        break;
                 }
             } catch (Exception e) {
                 handleSyncError(e, callback);
@@ -783,7 +809,7 @@ public class FootballRepository {
             @Override
             public void onResponse(Call<TeamsResponse> call, Response<TeamsResponse> response) {
                 if (!response.isSuccessful() || response.body() == null || response.body().getTeams() == null) {
-                    generateMockDataAsFallback(callback);
+                    handleSyncError(new IllegalStateException("Respuesta inválida de equipos"), callback);
                     return;
                 }
                 List<TeamAPI> apiTeams = response.body().getTeams();
@@ -804,7 +830,7 @@ public class FootballRepository {
 
             @Override
             public void onFailure(Call<TeamsResponse> call, Throwable t) {
-                generateMockDataAsFallback(callback);
+                handleSyncError(t, callback);
             }
         });
     }
@@ -847,13 +873,37 @@ public class FootballRepository {
         executor.execute(() -> {
             try {
                 syncStatus.postValue("Guardando jugadores...");
-                playerDao.deleteAllPlayers();
-                if (!allPlayers.isEmpty()) playerDao.insertPlayers(allPlayers);
 
-                // Log del total insertado para verificación (~20 equipos * 23-30 jugadores)
-                Log.d(TAG, "Jugadores guardados en Room: " + allPlayers.size());
+                // Marcar como no disponibles a los que no lleguen en la API (bajas), sin borrar tabla
+                if (allPlayers != null && !allPlayers.isEmpty()) {
+                    java.util.List<Integer> ids = new java.util.ArrayList<>();
+                    for (PlayerEntity p : allPlayers) ids.add(p.getPlayerId());
+                    try { playerDao.markUnavailableNotInIds(ids); } catch (Exception ignored) { }
 
-                markSyncCompleted(allPlayers.size());
+                    // Inserta ignorando (no tocará los existentes)
+                    long[] ins = playerDao.insertIgnore(allPlayers);
+                    long now = System.currentTimeMillis();
+                    // Para los que ya existían (id = -1), actualizar SOLO campos de ficha
+                    for (int i = 0; i < allPlayers.size(); i++) {
+                        if (ins != null && i < ins.length && ins[i] == -1L) {
+                            PlayerEntity e = allPlayers.get(i);
+                            playerDao.updateFromApiWithoutPoints(
+                                    e.getPlayerId(),
+                                    e.getName(),
+                                    e.getTeamId(),
+                                    e.getTeamName(),
+                                    e.getPosition(),
+                                    e.getNationality(),
+                                    e.getCurrentPrice(),
+                                    now
+                            );
+                        }
+                    }
+                }
+
+                Log.d(TAG, "Jugadores guardados/actualizados en Room: " + (allPlayers != null ? allPlayers.size() : 0));
+
+                markSyncCompleted(allPlayers != null ? allPlayers.size() : 0);
                 syncStatus.postValue("Listo");
                 isSyncing.postValue(false);
                 if (callback != null) callback.onSuccess();
@@ -863,25 +913,6 @@ public class FootballRepository {
         });
     }
 
-    /** Solo si la API falla. Crea datos de ejemplo para no dejar la app vacía. */
-    private void generateMockDataAsFallback(SyncCallback callback) {
-        executor.execute(() -> {
-            try {
-                teamDao.deleteAllTeams();
-                playerDao.deleteAllPlayers();
-                List<TeamEntity> teams = createMockTeams();
-                teamDao.insertTeams(teams);
-                List<PlayerEntity> players = createMockPlayers(teams);
-                playerDao.insertPlayers(players);
-                markSyncCompleted(players.size());
-                syncStatus.postValue("Datos de ejemplo cargados");
-                isSyncing.postValue(false);
-                if (callback != null) callback.onSuccess();
-            } catch (Exception e) {
-                handleSyncError(e, callback);
-            }
-        });
-    }
 
     /** Guarda equipos recibidos de la API. */
     private void saveTeamsToDatabase(List<TeamAPI> apiTeams) {
@@ -893,14 +924,15 @@ public class FootballRepository {
             e.setCrestUrl(t.getCrest() != null ? t.getCrest() : "");
             entities.add(e);
         }
-        teamDao.deleteAllTeams();
-        teamDao.insertTeams(entities);
-        Log.d(TAG, "Equipos guardados en Room: " + entities.size());
+        // Upsert: no borrar la tabla entera
+        if (!entities.isEmpty()) teamDao.insertTeams(entities);
+        Log.d(TAG, "Equipos guardados/actualizados en Room: " + entities.size());
     }
 
     /** Convierte DTOs de API a entidades de DB. */
     private List<PlayerEntity> convertApiPlayersToEntities(List<PlayerAPI> apiPlayers, TeamAPI team) {
         List<PlayerEntity> out = new ArrayList<>();
+        long now = System.currentTimeMillis();
         for (PlayerAPI p : apiPlayers) {
             PlayerEntity e = new PlayerEntity();
             e.setPlayerId(p.getId());
@@ -910,10 +942,9 @@ public class FootballRepository {
             e.setPosition(translatePositionToSpanish(p.getPosition()));
             e.setNationality(p.getNationality() != null ? p.getNationality() : "España");
             e.setCurrentPrice(calculatePlayerPrice(e.getPosition()));
-            // Fuente única de puntos: PlayerEntity.totalPoints.
-            // Al insertar desde API, si no hay dato de puntos, dejar en 0.
-            e.setTotalPoints(0);
+            // No tocar totalPoints aquí: evitar sobrescribir puntos persistidos.
             e.setAvailable(true);
+            e.setUpdatedAt(now);
             out.add(e);
         }
         return out;
@@ -955,11 +986,8 @@ public class FootballRepository {
 
     /** Construye una fecha ISO (yyyy-MM-dd) en UTC sumando daysOffset desde hoy. */
     private String buildIsoDate(int daysOffset) {
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.US);
-        cal.add(Calendar.DAY_OF_YEAR, daysOffset);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return sdf.format(cal.getTime());
+        java.time.LocalDate date = java.time.LocalDate.now(java.time.ZoneOffset.UTC).plusDays(daysOffset);
+        return date.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE);
     }
 
     /** Convierte una lista de MatchAPI a entidades Room. */
@@ -981,7 +1009,17 @@ public class FootballRepository {
                 String utc = m.getUtcDate();
                 long millis = 0L;
                 if (utc != null && !utc.isEmpty()) {
-                    millis = parseIsoToMillis(utc);
+                    try {
+                        java.time.Instant ins = java.time.OffsetDateTime.parse(utc).toInstant();
+                        millis = ins.toEpochMilli();
+                    } catch (Exception exParse) {
+                        // Fallback a parser robusto
+                        millis = parseIsoToMillis(utc);
+                        if (millis <= 0L) {
+                            Log.w(TAG, "utcDate inválido: " + utc, exParse);
+                            millis = 0L;
+                        }
+                    }
                 }
                 e.setUtcDateMillis(millis);
                 e.setStatus(m.getStatus());
@@ -1004,21 +1042,26 @@ public class FootballRepository {
 
     /** Parsea un ISO 8601 de football-data a epoch millis (UTC). */
     private long parseIsoToMillis(String iso) {
-        // Intentar con zona 'Z' explícita
-        String[] patterns = new String[] {
-                "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                "yyyy-MM-dd'T'HH:mm:ssX",
-                "yyyy-MM-dd'T'HH:mmX"
-        };
-        for (String p : patterns) {
+        if (iso == null || iso.isEmpty()) return 0L;
+        try {
+            // e.g., 2025-08-23T12:34:56Z
+            return java.time.Instant.parse(iso).toEpochMilli();
+        } catch (Exception e1) {
             try {
-                SimpleDateFormat sdf = new SimpleDateFormat(p, Locale.US);
-                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                Date d = sdf.parse(iso);
-                if (d != null) return d.getTime();
-            } catch (ParseException ignored) { }
+                // e.g., 2025-08-23T12:34:56+00:00 or with offset
+                return java.time.OffsetDateTime.parse(iso, java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                        .toInstant().toEpochMilli();
+            } catch (Exception e2) {
+                try {
+                    // e.g., 2025-08-23T12:34 (assume UTC)
+                    java.time.LocalDateTime ldt = java.time.LocalDateTime.parse(iso,
+                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+                    return ldt.toInstant(java.time.ZoneOffset.UTC).toEpochMilli();
+                } catch (Exception e3) {
+                    return 0L;
+                }
+            }
         }
-        return 0L;
     }
 
     /** Recalcula puntos para todos los partidos FINISHED presentes en Room usando eventos y alineaciones persistidos. */
@@ -1043,8 +1086,17 @@ public class FootballRepository {
         });
     }
 
+    /** Alias para especificación: recalcula si es necesario (idempotente). */
+    public void recomputePointsForAllFinishedMatchesIfNeeded() {
+        recomputePointsForAllFinishedMatches(null);
+    }
+
     private void recomputePointsForMatchInternal(MatchEntity match) {
         try {
+            // Solo calcular si el partido está FINISHED
+            if (match == null || match.getStatus() == null || !"FINISHED".equalsIgnoreCase(match.getStatus())) {
+                return;
+            }
             long matchId = match.getMatchId();
             // Cargar alineaciones y eventos de Room
             List<com.example.housemanager.database.entities.LineupEntryEntity> lineup = lineupEntryDao.getByMatch(matchId);
@@ -1098,7 +1150,9 @@ public class FootballRepository {
 
                 // Recalcular total acumulado del jugador
                 Integer total = playerPointsHistoryDao.getTotalForPlayer(pid);
-                playerDao.updateTotalPoints(pid, total != null ? total : 0);
+                int finalTotal = (total != null ? total : 0);
+                playerDao.updateTotalPoints(pid, finalTotal);
+                Log.d(TAG, "updateTotalPoints playerId=" + pid + " total=" + finalTotal);
             }
         } catch (Exception ignored) {
         }
@@ -1255,61 +1309,35 @@ public class FootballRepository {
     }
 
     /** Tipos de sincronización. */
-    private enum SyncStrategy { USE_CACHE, FULL_SYNC, PARTIAL_SYNC, MOCK_FALLBACK }
+    private enum SyncStrategy { USE_CACHE, FULL_SYNC, PARTIAL_SYNC }
 
-    /** Equipos de ejemplo. */
-    private List<TeamEntity> createMockTeams() {
-        String[] names = {
-                "Real Madrid","FC Barcelona","Atlético Madrid","Real Sociedad",
-                "Betis","Villarreal","Athletic","Valencia",
-                "Sevilla","Getafe","Osasuna","Celta",
-                "Rayo","Mallorca","Girona","Las Palmas",
-                "Alavés","Cádiz","Granada","Almería"
-        };
-        List<TeamEntity> out = new ArrayList<>();
-        for (int i = 0; i < names.length; i++) {
-            TeamEntity t = new TeamEntity();
-            t.setTeamId(i + 1);
-            t.setName(names[i]);
-            t.setCrestUrl("https://crests.football-data.org/" + (i + 1) + ".png");
-            out.add(t);
-        }
-        return out;
+    /** Genera la selección diaria del mercado si el día cambió. */
+    private void ensureDailyMarketSelectionIfNeeded() {
+        executor.execute(() -> {
+            try {
+                String today = todayYMD();
+                String saved = syncPrefs.getString(PREF_MARKET_DAY, null);
+                if (saved != null && saved.equals(today)) return; // ya generado hoy
+
+                // Limpiar selección previa
+                try { playerDao.clearMarket(); } catch (Exception ignored) { }
+
+                // Elegir 10 ids aleatorios de TODOS los jugadores
+                List<Integer> ids = playerDao.getRandomPlayerIdsSync(10);
+                if (ids != null && !ids.isEmpty()) {
+                    try { playerDao.markAvailableInIds(ids); } catch (Exception ignored) { }
+                }
+
+                // Guardar el día
+                syncPrefs.edit().putString(PREF_MARKET_DAY, today).apply();
+            } catch (Exception ignored) { }
+        });
     }
 
-    /** Jugadores de ejemplo. */
-    private List<PlayerEntity> createMockPlayers(List<TeamEntity> teams) {
-        String[] porteros = {"Ter Stegen", "Courtois", "Oblak", "Unai Simón"};
-        String[] defensas = {"Ramos", "Koundé", "Alaba", "Araujo", "Pau Torres"};
-        String[] medios   = {"Modric", "Pedri", "Koke", "Gavi", "De Jong"};
-        String[] delanteros = {"Benzema", "Lewandowski", "Griezmann", "Morata", "Vinícius"};
-
-        List<PlayerEntity> players = new ArrayList<>();
-        int id = 1;
-
-        for (TeamEntity team : teams) {
-            for (int i = 0; i < 2; i++) players.add(mockPlayer(id++, team, "Portero",   porteros[i % porteros.length]));
-            for (int i = 0; i < 6; i++) players.add(mockPlayer(id++, team, "Defensa",   defensas[i % defensas.length]));
-            for (int i = 0; i < 6; i++) players.add(mockPlayer(id++, team, "Medio",     medios[i % medios.length]));
-            for (int i = 0; i < 4; i++) players.add(mockPlayer(id++, team, "Delantero", delanteros[i % delanteros.length]));
-        }
-        return players;
-    }
-
-    /** Crea un jugador de ejemplo. */
-    private PlayerEntity mockPlayer(int id, TeamEntity team, String pos, String name) {
-        PlayerEntity e = new PlayerEntity();
-        e.setPlayerId(id);
-        e.setName(name);
-        e.setTeamId(team.getTeamId());
-        e.setTeamName(team.getName());
-        e.setPosition(pos);
-        e.setNationality("España");
-        e.setCurrentPrice(calculatePlayerPrice(pos));
-        // En datos de ejemplo, no inventamos puntos: 0 por defecto.
-        e.setTotalPoints(0);
-        e.setAvailable(true);
-        return e;
+    private String todayYMD() {
+        java.time.ZoneId zone = java.time.ZoneId.systemDefault();
+        java.time.LocalDate d = java.time.ZonedDateTime.now(zone).toLocalDate();
+        return d.format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE); // yyyyMMdd
     }
 
     /** Convierte entidades de equipo a modelo de UI. */

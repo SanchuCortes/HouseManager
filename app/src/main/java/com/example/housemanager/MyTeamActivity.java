@@ -73,11 +73,18 @@ public class MyTeamActivity extends AppCompatActivity {
 
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Mi Equipo");
+        if (toolbar != null) {
+            try {
+                setSupportActionBar(toolbar);
+            } catch (Exception e) {
+                android.util.Log.w("MyTeamActivity", "Error al configurar toolbar", e);
+            }
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setTitle("Mi Equipo");
+            }
+        } else {
+            android.util.Log.w("MyTeamActivity", "Toolbar no encontrada en el layout");
         }
     }
 
@@ -183,16 +190,12 @@ public class MyTeamActivity extends AppCompatActivity {
     }
 
     private void updateTeamStats() {
-        // Calcular valor del equipo (mock)
-        double teamValue = currentSquad.size() * 12.5; // Promedio de 12.5M por jugador
+        // No inventamos métricas: si no hay fuente real, mostramos estado vacío
         if (tvTeamValue != null) {
-            tvTeamValue.setText(String.format("%.1fM €", teamValue));
+            tvTeamValue.setText("—");
         }
-
-        // Presupuesto restante (mock)
-        double remainingBudget = 150.0 - teamValue; // 150M presupuesto inicial
         if (tvRemainingBudget != null) {
-            tvRemainingBudget.setText(String.format("%.1fM €", Math.max(0, remainingBudget)));
+            tvRemainingBudget.setText("—");
         }
     }
 

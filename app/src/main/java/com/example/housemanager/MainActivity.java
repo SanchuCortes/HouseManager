@@ -65,13 +65,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
-                    Log.d(TAG, "Cerrando navigation drawer");
-                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
-                } else {
-                    Log.d(TAG, "Usuario presionó botón atrás, cerrando aplicación");
-                    finish();
+                try {
+                    if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
+                        Log.d(TAG, "Cerrando navigation drawer");
+                        drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                        return;
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "Error al manejar back con drawer", e);
                 }
+                Log.d(TAG, "Usuario presionó botón atrás, cerrando aplicación");
+                finish();
             }
         });
         
@@ -109,16 +113,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Log.d(TAG, "Configurando toolbar y navigation drawer");
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        if (toolbar == null) {
+            Log.w(TAG, "Toolbar no encontrada en el layout. Saltando configuración de AppBar/Drawer.");
+            return;
+        }
+        try {
+            setSupportActionBar(toolbar);
+        } catch (Exception e) {
+            Log.w(TAG, "Error al configurar la toolbar", e);
+        }
 
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.navigation_view);
 
+        if (drawerLayout == null) {
+            Log.w(TAG, "DrawerLayout no encontrado. La navegación lateral estará deshabilitada.");
+            return;
+        }
         // Configurar el toggle para abrir/cerrar el drawer
-        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close);
-        drawerLayout.addDrawerListener(toggle);
-        toggle.syncState();
-        navigationView.setNavigationItemSelectedListener(this);
+        try {
+            toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open, R.string.close);
+            drawerLayout.addDrawerListener(toggle);
+            toggle.syncState();
+        } catch (Exception e) {
+            Log.w(TAG, "Error configurando ActionBarDrawerToggle", e);
+        }
+        if (navigationView != null) {
+            navigationView.setNavigationItemSelectedListener(this);
+        } else {
+            Log.w(TAG, "NavigationView no encontrado. Menú lateral no disponible.");
+        }
     }
 
     /**
@@ -237,9 +261,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             llMatchesContainer.setOnLongClickListener(v -> {
                 repository.getCurrentMatchday(new FootballRepository.MatchdayCallback() {
                     @Override public void onResult(int matchday) {
-                        repository.recomputePointsFromMatches(matchday, new FootballRepository.SyncCallback() {
+                        repository.recomputePointsForAllFinishedMatches(new FootballRepository.SyncCallback() {
                             @Override public void onSuccess() {
-                                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Puntos recalculados para jornada " + matchday, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+                                com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Puntos recalculados para partidos FINISHED", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
                             }
                             @Override public void onError(Throwable t) {
                                 com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Error recálculo: " + t.getMessage(), com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
@@ -486,10 +510,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         repository.getCurrentMatchday(new FootballRepository.MatchdayCallback() {
             @Override
             public void onResult(int matchday) {
-                repository.syncMatchday(matchday, new FootballRepository.SyncCallback() {
+                // Usar el flujo completo que descarga detalles (alineaciones y eventos) y recalcula puntos
+                repository.syncAndRecalculatePointsForCurrentMatchday(new FootballRepository.SyncCallback() {
                     @Override public void onSuccess() {
-                        // Recalcular puntos tras sincronizar la jornada (actualiza PlayerEntity.totalPoints)
-                        repository.recomputePointsFromMatches(matchday, null);
                         observeAndRenderMatchdayList();
                     }
                     @Override public void onError(Throwable t) { fallbackUpcomingRange(); }
@@ -498,6 +521,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
             @Override
             public void onError(Throwable t) { fallbackUpcomingRange(); }
+        });
+
+        // Observación adicional: si hay datos de cualquier modo (matchday o próximos), pintarlos
+        repository.getUpcoming10MatchesLive().observe(this, matches -> {
+            if (matches != null && !matches.isEmpty()) {
+                renderMatchesList(matches);
+            }
         });
     }
 
@@ -524,7 +554,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         // Limitar a 10
         int limit = Math.min(10, matches.size());
-        java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
+        // Formateador de fecha/hora local con día de la semana abreviado en español
+        java.util.Locale localeEs = new java.util.Locale("es", "ES");
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("EEE dd/MM HH:mm", localeEs);
+        // Forzar zona horaria Europe/Madrid (horario de España peninsular)
+        java.time.ZoneId zone = java.time.ZoneId.of("Europe/Madrid");
         for (int i = 0; i < limit; i++) {
             com.example.housemanager.database.entities.MatchEntity m = matches.get(i);
             android.widget.LinearLayout row = new android.widget.LinearLayout(this);
@@ -533,33 +567,37 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             int padV = (int) (8 * getResources().getDisplayMetrics().density);
             row.setPadding(0, padV / 2, 0, padV / 2);
 
-            TextView tvTime = new TextView(this);
-            tvTime.setTextAppearance(this, R.style.TextSecondary);
-            tvTime.setTextSize(12);
-            tvTime.setMinWidth((int) (40 * getResources().getDisplayMetrics().density));
-            String timeText = timeFormat.format(new java.util.Date(m.getUtcDateMillis()));
-            tvTime.setText(timeText);
-            android.widget.LinearLayout.LayoutParams lpTime = new android.widget.LinearLayout.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            lpTime.rightMargin = (int) (12 * getResources().getDisplayMetrics().density);
-            row.addView(tvTime, lpTime);
-
+            // Construimos el texto completo en una sola línea: "EEE dd/MM HH:mm — Local vs Visitante" o con marcador
             TextView tvDesc = new TextView(this);
             tvDesc.setTextAppearance(this, R.style.TextBody);
             tvDesc.setTextSize(14);
+
+            Long ms = m.getUtcDateMillis();
+            String when = "";
+            if (ms != null && ms > 0) {
+                try {
+                    java.time.ZonedDateTime zdt = java.time.Instant.ofEpochMilli(ms).atZone(zone);
+                    when = dtf.format(zdt);
+                } catch (Exception e) {
+                    android.util.Log.w("MatchesAdapter", "Error formateando fecha: " + ms, e);
+                    when = ""; // sin fecha si falla
+                }
+            }
+
             String home = (m.getHomeTeamName() != null ? m.getHomeTeamName() : "");
             String away = (m.getAwayTeamName() != null ? m.getAwayTeamName() : "");
             Integer hs = m.getHomeScore();
             Integer as = m.getAwayScore();
+            String status = m.getStatus();
+
             String text;
-            if (hs != null && as != null) {
-                // Partido con marcador
-                text = home + " " + hs + "–" + as + " " + away;
+            boolean finished = status != null && status.equalsIgnoreCase("FINISHED");
+            if (finished && (hs != null && as != null)) {
+                // Partido finalizado: incluir marcador
+                text = (when.isEmpty() ? "" : when + " — ") + home + " " + hs + "–" + as + " " + away;
             } else {
-                // Próximo partido: hora — Home vs Away (hora ya en columna izquierda)
-                text = home + " vs " + away;
+                // Próximo o no finalizado: sin marcador
+                text = (when.isEmpty() ? "" : when + " — ") + home + " vs " + away;
             }
             tvDesc.setText(text);
             android.widget.LinearLayout.LayoutParams lpDesc = new android.widget.LinearLayout.LayoutParams(

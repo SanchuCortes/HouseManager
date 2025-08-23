@@ -40,6 +40,9 @@ public class PlayerEntity {
     @ColumnInfo(name = "available")
     private boolean available;
 
+    @ColumnInfo(name = "updatedAt")
+    private long updatedAt;
+
     public PlayerEntity() {
     }
 
@@ -53,6 +56,7 @@ public class PlayerEntity {
     public int getCurrentPrice() { return currentPrice; }
     public int getTotalPoints() { return totalPoints; }
     public boolean isAvailable() { return available; }
+    public long getUpdatedAt() { return updatedAt; }
 
     // --- SETTERS (por si los necesitas al guardar/actualizar) ---
     public void setPlayerId(int playerId) { this.playerId = playerId; }
@@ -64,4 +68,5 @@ public class PlayerEntity {
     public void setCurrentPrice(int currentPrice) { this.currentPrice = currentPrice; }
     public void setTotalPoints(int totalPoints) { this.totalPoints = totalPoints; }
     public void setAvailable(boolean available) { this.available = available; }
+    public void setUpdatedAt(long updatedAt) { this.updatedAt = updatedAt; }
 }
