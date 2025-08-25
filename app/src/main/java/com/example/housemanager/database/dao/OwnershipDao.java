@@ -16,6 +16,10 @@ public interface OwnershipDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(LeaguePlayerOwnership ownership);
 
+    // Tiempos de adquisición de mi plantilla por liga/usuario (para bloqueos de cláusula)
+    @Query("SELECT playerId AS playerId, acquiredAtMillis AS acquiredAtMillis FROM LeaguePlayerOwnership WHERE leagueId = :leagueId AND ownerUserId = :userId")
+    androidx.lifecycle.LiveData<java.util.List<com.example.housemanager.database.pojo.OwnershipTime>> getMyOwnershipTimes(long leagueId, long userId);
+
     // Conteo por posición para una liga/usuario (sync)
     @Query("SELECT p.position AS position, COUNT(*) AS count FROM players p JOIN LeaguePlayerOwnership o ON o.playerId = p.playerId WHERE o.leagueId = :leagueId AND o.ownerUserId = :userId GROUP BY p.position")
     java.util.List<com.example.housemanager.database.pojo.PositionCount> getPositionCountsSync(long leagueId, long userId);

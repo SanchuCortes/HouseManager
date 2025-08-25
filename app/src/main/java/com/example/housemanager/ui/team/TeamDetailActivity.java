@@ -1,11 +1,10 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.team;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.housemanager.R;
 import com.example.housemanager.api.models.PlayerAPI;
 import com.example.housemanager.viewmodel.FootballViewModel;
 
@@ -135,7 +135,7 @@ public class TeamDetailActivity extends AppCompatActivity implements PlayersSimp
     @Override
     public void onPlayerClick(PlayerAPI player) {
         // Abrir detalles del jugador
-        Intent intent = new Intent(this, com.example.housemanager.ui.PlayerDetailActivity.class);
+        Intent intent = new Intent(this, PlayerDetailActivity.class);
         intent.putExtra("player_id", player.getId());
         intent.putExtra("player_name", player.getName());
         intent.putExtra("player_position", player.getPosition());

@@ -1,4 +1,4 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.team;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.housemanager.R;
 import com.example.housemanager.api.models.PlayerAPI;
 
 import java.util.ArrayList;

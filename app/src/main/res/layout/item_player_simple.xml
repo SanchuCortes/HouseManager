@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@color/card_background"
     android:padding="12dp"
@@ -7,7 +8,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <!-- Fila con nombre y puntos -->
+    
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,4 +40,17 @@
         android:textSize="14sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_clause"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Clausular"
+        android:enabled="false"
+        android:visibility="gone"
+        app:backgroundTint="@color/accent_gold"
+        android:textColor="@color/text_dark"/>
 </LinearLayout>
+
+

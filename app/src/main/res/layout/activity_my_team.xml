@@ -7,7 +7,7 @@
     android:background="@color/background_white"
     tools:context=".MyTeamActivity">
 
-    <!-- Toolbar -->
+    
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Header con nombre de liga -->
+            
             <TextView
                 android:id="@+id/tv_league_header"
                 android:layout_width="wrap_content"
@@ -47,7 +47,7 @@
                 android:drawablePadding="8dp"
                 app:drawableTint="@color/secondary_green" />
 
-            <!-- Card con estadísticas del equipo -->
+            
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_team_stats"
                 android:layout_width="match_parent"
@@ -72,14 +72,14 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Grid con las estadísticas -->
+                    
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:weightSum="3">
 
-                        <!-- Valor del equipo -->
+                        
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -112,7 +112,7 @@
 
                         </LinearLayout>
 
-                        <!-- Presupuesto restante -->
+                        
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -145,7 +145,7 @@
 
                         </LinearLayout>
 
-                        <!-- Puntos totales -->
+                        
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -184,7 +184,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card con la lista de jugadores -->
+            
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -208,7 +208,7 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Lista de jugadores -->
+                    
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/recycler_players"
                         android:layout_width="match_parent"
@@ -219,7 +219,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Botones de acciones -->
+            
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -259,3 +259,4 @@
     </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

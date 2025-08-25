@@ -5,7 +5,7 @@ package com.example.housemanager.api.models;
  */
 public class MatchAPI {
     private long id;
-    private String utcDate; // mantener como ISO 8601 (p.ej. 2025-08-01T19:00:00Z)
+    private String utcDate;
     private String status;
     private Integer matchday; // para filtros por jornada y fallback
 

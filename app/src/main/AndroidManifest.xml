@@ -8,6 +8,7 @@
     <uses-sdk android:minSdkVersion="24" />
 
     <application
+
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -19,7 +20,7 @@
         tools:targetApi="31">
 
         <activity
-            android:name=".LoginActivity"
+            android:name=".ui.main.LoginActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager">
@@ -30,77 +31,79 @@
         </activity>
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager" />
 
         <activity
-            android:name=".LeaguesActivity"
+            android:name=".ui.leagues.LeaguesActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".ui.main.MainActivity" />
 
         <activity
-            android:name=".CreateLeagueActivity"
+            android:name=".ui.leagues.CreateLeagueActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".ui.main.MainActivity" />
 
         <activity
-            android:name=".LeagueConfigActivity"
+            android:name=".ui.leagues.LeagueConfigActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager"
-            android:parentActivityName=".CreateLeagueActivity" />
+            android:parentActivityName=".ui.leagues.CreateLeagueActivity" />
 
         <activity
-            android:name=".LeagueDetailActivity"
+            android:name=".ui.leagues.LeagueDetailActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager"
-            android:parentActivityName=".LeaguesActivity" />
+            android:parentActivityName=".ui.leagues.LeaguesActivity" />
 
         <activity
             android:name=".MyTeamActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager"
-            android:parentActivityName=".LeagueDetailActivity" />
+            android:parentActivityName=".ui.leagues.LeagueDetailActivity" />
 
         <activity
-            android:name=".TeamsBrowserActivity"
+            android:name=".ui.team.TeamsBrowserActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager" />
 
         <activity
-            android:name=".TeamDetailActivity"
+            android:name=".ui.team.TeamDetailActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager" />
 
         <activity
-            android:name=".ui.PlayerDetailActivity"
+            android:name=".ui.team.PlayerDetailActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager" />
 
         <activity
-            android:name=".TransferMarketActivity"
+            android:name=".ui.market.TransferMarketActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager" />
 
         <activity
-            android:name=".ClassificationActivity"
+            android:name=".ui.leagues.ClassificationActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.HouseManager"
-            android:parentActivityName=".LeagueDetailActivity" />
+            android:parentActivityName=".ui.leagues.LeagueDetailActivity" />
 
     </application>
 
 </manifest>
+
+

@@ -12,14 +12,14 @@ import retrofit2.http.GET;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
-/** Endpoints necesarios para equipos, plantillas y partidos. */
+/** Endpoints para consultar equipos, plantillas y partidos sin rodeos. */
 public interface FootballApiService {
 
     /** Info de la competición PD (incluye current season y currentMatchday). */
     @GET("competitions/PD")
     Call<CompetitionAPI> getCompetition();
 
-    /** Alternativa explícita para detalles de competición (estructura mínima). */
+    /** Alternativa simple para leer detalles de la competición (estructura básica). */
     @GET("competitions/PD")
     Call<CompetitionDetails> getCompetitionDetails();
 
@@ -31,7 +31,7 @@ public interface FootballApiService {
     @GET("teams/{id}")
     Call<TeamAPI> getTeamDetails(@Path("id") int teamId);
 
-    /** Partidos por rango de fechas (ISO yyyy-MM-dd). */
+    /** Partidos entre dos fechas (formato ISO yyyy-MM-dd). */
     @GET("competitions/PD/matches")
     Call<MatchesResponse> getMatches(
             @Query("dateFrom") String dateFromIso,
@@ -42,7 +42,7 @@ public interface FootballApiService {
     @GET("competitions/PD/matches")
     Call<MatchesResponse> getMatchesByMatchday(@Query("matchday") Integer matchday);
 
-    /** Detalle de partido (si está disponible en el plan). */
+    /** Detalle de un partido */
     @GET("matches/{matchId}")
     Call<MatchDetailResponse> getMatchDetail(@Path("matchId") long matchId);
 }

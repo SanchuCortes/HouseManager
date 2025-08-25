@@ -31,7 +31,7 @@ public class LineupEntryEntity {
     @ColumnInfo(name = "teamId")
     private int teamId;
 
-    /** "STARTER" o "SUB" */
+
     @ColumnInfo(name = "role")
     private String role;
 

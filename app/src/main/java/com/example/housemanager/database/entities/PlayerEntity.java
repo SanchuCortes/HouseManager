@@ -48,7 +48,7 @@ public class PlayerEntity {
     public PlayerEntity() {
     }
 
-    // --- GETTERS compatibles con el repositorio ---
+    // GETTERS compatibles con el repositorio
     public int getPlayerId() { return playerId; }
     public String getName() { return name; }
     public int getTeamId() { return teamId; }
@@ -60,7 +60,7 @@ public class PlayerEntity {
     public boolean isAvailable() { return available; }
     public long getUpdatedAt() { return updatedAt; }
 
-    // --- SETTERS (por si los necesitas al guardar/actualizar) ---
+    //  SETTERS
     public void setPlayerId(int playerId) { this.playerId = playerId; }
     public void setName(@NonNull String name) { this.name = name; }
     public void setTeamId(int teamId) { this.teamId = teamId; }

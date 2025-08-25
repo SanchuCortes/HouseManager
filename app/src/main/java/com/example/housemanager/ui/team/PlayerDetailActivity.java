@@ -1,4 +1,4 @@
-package com.example.housemanager.ui;
+package com.example.housemanager.ui.team;
 
 import android.os.Bundle;
 import android.view.MenuItem;

@@ -1,4 +1,4 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.leagues;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,11 +9,11 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.housemanager.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
@@ -86,8 +86,8 @@ public class LeagueConfigActivity extends AppCompatActivity {
                 "150M €", "160M €", "170M €", "180M €", "190M €", "200M €"
         };
         ArrayAdapter<String> budgetAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, budgetOptions);
-        budgetAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                R.layout.spinner_item_dark, budgetOptions);
+        budgetAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark);
         spinnerBudget.setAdapter(budgetAdapter);
         spinnerBudget.setSelection(5); // 150M por defecto
 
@@ -97,8 +97,8 @@ public class LeagueConfigActivity extends AppCompatActivity {
             hourOptions[i] = String.format("%02d:00", i);
         }
         ArrayAdapter<String> hourAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, hourOptions);
-        hourAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                R.layout.spinner_item_dark, hourOptions);
+        hourAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark);
         spinnerMarketHour.setAdapter(hourAdapter);
         spinnerMarketHour.setSelection(14); // 14:00 por defecto
     }
@@ -166,6 +166,13 @@ public class LeagueConfigActivity extends AppCompatActivity {
         boolean captain = switchCaptain.isChecked();
         boolean bench = switchBench.isChecked();
         boolean coach = switchCoach.isChecked();
+
+        // Guardar reglas simples globales para demo (podría ser por liga)
+        android.content.SharedPreferences prefs = getSharedPreferences("league_rules_prefs", MODE_PRIVATE);
+        prefs.edit()
+                .putBoolean(com.example.housemanager.repository.FootballRepository.KEY_CLAUSE_ENABLED, clauseRobbery)
+                .putInt(com.example.housemanager.repository.FootballRepository.KEY_CLAUSE_BLOCK_DAYS, blockDays)
+                .apply();
 
         // Guardar la liga usando LeagueManager
         LeagueManager.League newLeague = saveLeague(leagueName, budget, marketHour, teamType);

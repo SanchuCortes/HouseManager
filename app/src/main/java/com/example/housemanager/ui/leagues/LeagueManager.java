@@ -1,4 +1,4 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.leagues;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -38,7 +38,21 @@ public class LeagueManager {
             e.setParticipants(1);
             e.setStatus("Activa");
             e.setCreatedDate(currentDate());
-            db.leagueDao().insertLeague(e);
+            long leagueId = db.leagueDao().insertLeague(e);
+
+            // Generar plantilla inicial si el usuario eligió una opción de presupuesto aleatorio
+            int target = 0;
+            if (teamType != null) {
+                String t = teamType.toLowerCase();
+                if (t.contains("100")) target = 100;
+                else if (t.contains("120")) target = 120;
+                else if (t.contains("150")) target = 150;
+            }
+            if (target > 0) {
+                // usuario demo: 1L; tolerancia: ±8M
+                com.example.housemanager.repository.FootballRepository.getInstance(context.getApplicationContext())
+                        .generateInitialSquadForNewLeague(leagueId, target, 8, 1L);
+            }
         });
         return l;
     }

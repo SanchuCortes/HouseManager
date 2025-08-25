@@ -6,9 +6,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/background_field_enhanced"
-    tools:context=".LeagueConfigActivity">
+    tools:context=".ui.leagues.LeagueConfigActivity">
 
-    <!-- AppBar -->
+
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -27,7 +27,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Contenido principal -->
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -40,7 +40,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Información básica -->
+
             <com.google.android.material.card.MaterialCardView
                 style="@style/CardPrimary"
                 android:layout_width="match_parent"
@@ -61,7 +61,7 @@
                         android:textColor="@color/accent_gold"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Nombre de la liga -->
+
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/til_league_name"
                         android:layout_width="match_parent"
@@ -84,7 +84,7 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Presupuesto inicial -->
+                   
                     <TextView
                         style="@style/TextBody"
                         android:layout_width="match_parent"
@@ -99,9 +99,10 @@
                         android:layout_height="48dp"
                         android:layout_marginBottom="16dp"
                         android:background="@drawable/rounded_background_light"
+                        android:popupBackground="@color/card_background"
                         android:padding="12dp" />
 
-                    <!-- Hora actualización mercado -->
+                    
                     <TextView
                         style="@style/TextBody"
                         android:layout_width="match_parent"
@@ -115,13 +116,14 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:background="@drawable/rounded_background_light"
+                        android:popupBackground="@color/card_background"
                         android:padding="12dp" />
 
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Configuración de equipo inicial -->
+            
             <com.google.android.material.card.MaterialCardView
                 style="@style/CardPrimary"
                 android:layout_width="match_parent"
@@ -164,8 +166,8 @@
                             android:text="Equipo Vacío"
                             android:checked="true"
                             android:checkable="true"
-                            android:textColor="@color/white"
-                            app:chipBackgroundColor="@color/secondary_green"
+                            android:textColor="@color/chip_text_selector"
+                            app:chipBackgroundColor="@color/chip_bg_selector"
                             app:checkedIconTint="@color/white" />
 
                         <com.google.android.material.chip.Chip
@@ -174,8 +176,8 @@
                             android:layout_height="wrap_content"
                             android:text="Aleatorio 100M"
                             android:checkable="true"
-                            android:textColor="@color/text_dark"
-                            app:chipBackgroundColor="@color/gray_light"
+                            android:textColor="@color/chip_text_selector"
+                            app:chipBackgroundColor="@color/chip_bg_selector"
                             app:checkedIconTint="@color/white" />
 
                         <com.google.android.material.chip.Chip
@@ -184,8 +186,8 @@
                             android:layout_height="wrap_content"
                             android:text="Aleatorio 120M"
                             android:checkable="true"
-                            android:textColor="@color/text_dark"
-                            app:chipBackgroundColor="@color/gray_light"
+                            android:textColor="@color/chip_text_selector"
+                            app:chipBackgroundColor="@color/chip_bg_selector"
                             app:checkedIconTint="@color/white" />
 
                         <com.google.android.material.chip.Chip
@@ -194,8 +196,8 @@
                             android:layout_height="wrap_content"
                             android:text="Aleatorio 150M"
                             android:checkable="true"
-                            android:textColor="@color/text_dark"
-                            app:chipBackgroundColor="@color/gray_light"
+                            android:textColor="@color/chip_text_selector"
+                            app:chipBackgroundColor="@color/chip_bg_selector"
                             app:checkedIconTint="@color/white" />
 
                     </com.google.android.material.chip.ChipGroup>
@@ -204,7 +206,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Configuración de transferencias -->
+            
             <com.google.android.material.card.MaterialCardView
                 style="@style/CardPrimary"
                 android:layout_width="match_parent"
@@ -225,7 +227,7 @@
                         android:textColor="@color/accent_gold"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Robos por cláusula -->
+                    
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -270,7 +272,7 @@
 
                     </LinearLayout>
 
-                    <!-- Cesiones -->
+                    
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -315,7 +317,7 @@
 
                     </LinearLayout>
 
-                    <!-- Días de bloqueo -->
+                    
                     <TextView
                         style="@style/TextBody"
                         android:layout_width="match_parent"
@@ -352,7 +354,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Configuración de juego -->
+            
             <com.google.android.material.card.MaterialCardView
                 style="@style/CardPrimary"
                 android:layout_width="match_parent"
@@ -373,7 +375,7 @@
                         android:textColor="@color/accent_gold"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Capitán -->
+                    
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -418,7 +420,7 @@
 
                     </LinearLayout>
 
-                    <!-- Banquillo -->
+                    
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -463,7 +465,7 @@
 
                     </LinearLayout>
 
-                    <!-- Entrenador -->
+                    
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -511,7 +513,7 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Botones de acción -->
+            
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -545,3 +547,4 @@
     </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+

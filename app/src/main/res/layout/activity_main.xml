@@ -6,14 +6,12 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".ui.main.MainActivity">
 
-    <!-- Contenido principal -->
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- AppBar con Material Design -->
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -30,7 +28,6 @@
                 app:titleTextColor="@color/white"
                 app:logo="@null">
 
-                <!-- Logo HomeField centrado y más pequeño -->
                 <ImageView
                     android:layout_width="300dp"
                     android:layout_height="60dp"
@@ -45,7 +42,6 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <!-- Contenido con scroll -->
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -59,7 +55,6 @@
                 android:background="@drawable/background_field_enhanced"
                 android:padding="16dp">
 
-                <!-- Saludo con icono -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -102,7 +97,6 @@
 
                 </LinearLayout>
 
-                <!-- Card de estadísticas rápidas -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/CardPrimary"
                     android:layout_width="match_parent"
@@ -114,7 +108,6 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Header del card -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -138,14 +131,12 @@
 
                         </LinearLayout>
 
-                        <!-- Fila de estadísticas -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
                             android:baselineAligned="false">
 
-                            <!-- Ligas activas -->
                             <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -178,7 +169,6 @@
                                 android:layout_width="16dp"
                                 android:layout_height="1dp" />
 
-                            <!-- Alineaciones incompletas -->
                             <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -214,7 +204,6 @@
 
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Indicadores de sincronización -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -241,7 +230,6 @@
                         android:visibility="gone"/>
                 </LinearLayout>
 
-                <!-- Título de acciones -->
                 <TextView
                     style="@style/TextSubtitle"
                     android:layout_width="wrap_content"
@@ -249,13 +237,11 @@
                     android:text="¿Qué quieres hacer?"
                     android:layout_marginBottom="16dp" />
 
-                <!-- Botones principales mejorados -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- Ver Ligas -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_view_leagues"
                         style="@style/ButtonPrimary"
@@ -267,7 +253,6 @@
                         app:iconGravity="textStart"
                         app:iconPadding="12dp" />
 
-                    <!-- Crear Liga -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_create_league"
                         style="@style/ButtonSecondary"
@@ -279,7 +264,6 @@
                         app:iconGravity="textStart"
                         app:iconPadding="12dp" />
 
-                    <!-- Unirse a Liga -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_join_league"
                         style="@style/ButtonSecondary"
@@ -293,7 +277,6 @@
 
                 </LinearLayout>
 
-                <!-- Card de próximos partidos -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/CardList"
                     android:layout_width="match_parent"
@@ -305,7 +288,6 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Header de próximos partidos -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -330,7 +312,6 @@
 
                         </LinearLayout>
 
-                        <!-- Lista de partidos (se poblará dinámicamente) -->
                         <LinearLayout
                             android:id="@+id/ll_matches_container"
                             android:layout_width="match_parent"
@@ -341,7 +322,6 @@
 
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Espacio reducido -->
                 <Space
                     android:layout_width="match_parent"
                     android:layout_height="16dp" />
@@ -352,7 +332,6 @@
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-    <!-- Navigation Drawer con fondo oscuro -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigation_view"
         android:layout_width="280dp"
@@ -366,3 +345,4 @@
         app:itemTextColor="@color/text_dark" />
 
 </androidx.drawerlayout.widget.DrawerLayout>
+

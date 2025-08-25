@@ -1,4 +1,4 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.leagues;
 
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -10,13 +10,12 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.housemanager.repository.models.ManagerScore;
+import com.example.housemanager.R;
 import com.example.housemanager.ui.adapters.ManagerScoreAdapter;
 import com.example.housemanager.viewmodel.FootballViewModel;
 import com.example.housemanager.repository.FootballRepository;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Muestra clasificación por managers (temporada por defecto).
@@ -51,8 +50,12 @@ public class ClassificationActivity extends AppCompatActivity {
             android.util.Log.w("ClassificationActivity", "Toolbar no encontrada en el layout");
         }
 
-        leagueId = getIntent().getLongExtra(EXTRA_LEAGUE_ID, 1L);
-        if (leagueId == 0L) leagueId = 1L;
+        leagueId = getIntent().getLongExtra(EXTRA_LEAGUE_ID, -1L);
+        if (leagueId <= 0) {
+            android.widget.Toast.makeText(this, "Falta leagueId", android.widget.Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         // Recycler
         RecyclerView rv = findViewById(R.id.recycler_scores);

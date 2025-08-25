@@ -1,31 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Colores principales TEMA OSCURO -->
-    <color name="primary_blue">#0F0F0F</color>           <!-- Negro principal -->
-    <color name="secondary_green">#16A34A</color>        <!-- Verde césped (mantener) -->
-    <color name="background_white">#121212</color>       <!-- Fondo negro suave -->
-    <color name="text_dark">#FFFFFF</color>              <!-- Texto blanco -->
-    <color name="accent_gold">#F59E0B</color>            <!-- Amarillo oro para detalles -->
+    
+    <color name="primary_blue">#0F0F0F</color>           
+    <color name="secondary_green">#16A34A</color>        
+    <color name="background_white">#121212</color>       
+    <color name="text_dark">#FFFFFF</color>              
+    <color name="accent_gold">#F59E0B</color>            
 
-    <!-- Variaciones -->
-    <color name="primary_blue_dark">#000000</color>      <!-- Negro puro -->
-    <color name="primary_blue_light">#1A1A1A</color>    <!-- Gris oscuro -->
-    <color name="green_pressed">#15803D</color>          <!-- Verde más oscuro -->
-    <color name="green_light">#22C55E</color>            <!-- Verde más claro -->
+    
+    <color name="primary_blue_dark">#000000</color>      
+    <color name="primary_blue_light">#1A1A1A</color>    
+    <color name="green_pressed">#15803D</color>          
+    <color name="green_light">#22C55E</color>            
 
-    <!-- Colores de soporte -->
-    <color name="white">#FFFFFF</color>                  <!-- Blanco puro -->
-    <color name="gray_light">#1E1E1E</color>             <!-- Gris muy oscuro para cards -->
-    <color name="gray_medium">#B0B0B0</color>            <!-- Gris más claro para texto secundario -->
-    <color name="error_red">#EF4444</color>              <!-- Rojo para errores -->
+    
+    <color name="white">#FFFFFF</color>                  
+    <color name="gray_light">#1E1E1E</color>             
+    <color name="gray_medium">#B0B0B0</color>            
+    <color name="error_red">#EF4444</color>              
 
-    <!-- Fondos específicos para cards -->
-    <color name="card_background">#202020</color>        <!-- Cards un poco más claras -->
-    <color name="stats_green_bg">#1A3A25</color>         <!-- Verde más claro para stats -->
-    <color name="stats_gold_bg">#2A1F0F</color>          <!-- Dorado muy oscuro -->
+    
+    <color name="card_background">#202020</color>        
+    <color name="stats_green_bg">#1A3A25</color>         
+    <color name="stats_gold_bg">#2A1F0F</color>          
 
-    <!-- Transparencias -->
-    <color name="green_ripple">#2916A34A</color>         <!-- Verde con transparencia -->
-    <color name="blue_ripple">#291A1A1A</color>          <!-- Gris con transparencia -->
-    <color name="shadow_color">#40000000</color>         <!-- Sombra más visible -->
+    
+    <color name="green_ripple">#2916A34A</color>         
+    <color name="blue_ripple">#291A1A1A</color>          
+    <color name="shadow_color">#40000000</color>         
 </resources>
+

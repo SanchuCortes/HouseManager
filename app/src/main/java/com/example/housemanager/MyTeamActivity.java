@@ -14,6 +14,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.housemanager.api.models.PlayerAPI;
+import com.example.housemanager.ui.market.TransferMarketActivity;
+import com.example.housemanager.ui.team.CaptainManager;
+import com.example.housemanager.ui.team.PlayersSimpleAdapter;
 import com.example.housemanager.viewmodel.FootballViewModel;
 import com.google.android.material.button.MaterialButton;
 
@@ -28,6 +31,14 @@ public class MyTeamActivity extends AppCompatActivity {
 
     private FootballViewModel vm;
     private PlayersSimpleAdapter adapter;
+
+    private android.os.Handler clauseHandler;
+    private final Runnable clauseTick = new Runnable() {
+        @Override public void run() {
+            if (adapter != null) adapter.notifyDataSetChanged();
+            if (clauseHandler != null) clauseHandler.postDelayed(this, 60_000L); // cada minuto
+        }
+    };
 
     private TextView tvHeader;
     private TextView tvPoints;
@@ -53,11 +64,12 @@ public class MyTeamActivity extends AppCompatActivity {
         // Inicializar vistas
         initViews();
         setupToolbar();
-        setupRecyclerView();
 
-        // Obtener datos del intent (antes de configurar observers)
+        // Obtener datos del intent (antes de configurar observers y RecyclerView que dependen de leagueId)
         getIntentData();
+        if (isFinishing()) return;
 
+        setupRecyclerView();
         setupButtons();
         setupViewModel();
 
@@ -99,7 +111,7 @@ public class MyTeamActivity extends AppCompatActivity {
         adapter = new PlayersSimpleAdapter(player -> {
             // CLICK EN JUGADOR → asignar capitán
             currentCaptainId = player.getId();
-            CaptainManager.setCaptain(this, teamId, currentCaptainId);
+            CaptainManager.setCaptain(this, leagueId, 1L, currentCaptainId);
             adapter.setCaptainId(currentCaptainId);
             recalculatePoints();
 
@@ -110,6 +122,21 @@ public class MyTeamActivity extends AppCompatActivity {
         });
 
         recyclerView.setAdapter(adapter);
+
+        // Reglas de cláusula (global demo)
+        android.content.SharedPreferences prefs = getSharedPreferences("league_rules_prefs", MODE_PRIVATE);
+        boolean clauseEnabled = prefs.getBoolean(com.example.housemanager.repository.FootballRepository.KEY_CLAUSE_ENABLED, true);
+        int blockDays = prefs.getInt(com.example.housemanager.repository.FootballRepository.KEY_CLAUSE_BLOCK_DAYS, 14);
+        adapter.setClauseRules(clauseEnabled, blockDays);
+
+        // Observar tiempos de adquisición para countdown
+        com.example.housemanager.repository.FootballRepository.getInstance(this)
+                .getMyOwnershipTimes(leagueId, 1L)
+                .observe(this, times -> adapter.setOwnershipTimes(times));
+
+        // Iniciar refresco periódico del countdown
+        clauseHandler = new android.os.Handler();
+        clauseHandler.postDelayed(clauseTick, 60_000L);
     }
 
     private void setupButtons() {
@@ -117,7 +144,7 @@ public class MyTeamActivity extends AppCompatActivity {
         btnTransfers.setOnClickListener(v -> {
             Intent intent = new Intent(this, TransferMarketActivity.class);
             // Usar el id de liga actual de esta pantalla
-            intent.putExtra("EXTRA_LEAGUE_ID", leagueId);
+            intent.putExtra(TransferMarketActivity.EXTRA_LEAGUE_ID, leagueId);
             startActivity(intent);
         });
 
@@ -140,7 +167,7 @@ public class MyTeamActivity extends AppCompatActivity {
                 adapter.submit(players);
 
                 // Cargar capitán guardado
-                currentCaptainId = CaptainManager.getCaptain(this, teamId);
+                currentCaptainId = CaptainManager.getCaptain(this, leagueId, 1L);
                 adapter.setCaptainId(currentCaptainId);
 
                 recalculatePoints();
@@ -169,7 +196,12 @@ public class MyTeamActivity extends AppCompatActivity {
     private void getIntentData() {
         // Obtener datos del intent
         teamId = getIntent().getIntExtra(EXTRA_TEAM_ID, 1); // Default team ID = 1
-        leagueId = getIntent().getLongExtra(EXTRA_LEAGUE_ID, 1L);
+        leagueId = getIntent().getLongExtra(EXTRA_LEAGUE_ID, -1L);
+        if (leagueId <= 0) {
+            android.widget.Toast.makeText(this, "Falta leagueId", android.widget.Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
         leagueName = getIntent().getStringExtra(EXTRA_LEAGUE_NAME);
 
         if (leagueName != null) {
@@ -182,6 +214,14 @@ public class MyTeamActivity extends AppCompatActivity {
         // aquí solo recalculamos/actualizamos el header si fuese necesario
         recalculatePoints();
         updateTeamStats();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (clauseHandler != null) {
+            clauseHandler.removeCallbacks(clauseTick);
+        }
     }
 
     private void recalculatePoints() {

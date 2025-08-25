@@ -1,4 +1,4 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.leagues;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,9 +11,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.housemanager.ui.adapters.LeaguesAdapter;
+import com.example.housemanager.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import java.util.List;
 
 // Muestra mis ligas. Si no hay, enseña estado vacío con CTA.
 public class LeaguesActivity extends AppCompatActivity {

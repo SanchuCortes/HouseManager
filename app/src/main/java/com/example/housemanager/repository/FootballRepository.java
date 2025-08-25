@@ -9,7 +9,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 
-import com.example.housemanager.ApiClient;
+import com.example.housemanager.api.ApiClient;
 import com.example.housemanager.api.FootballApiService;
 import com.example.housemanager.api.models.MatchesResponse;
 import com.example.housemanager.api.models.MatchAPI;
@@ -44,7 +44,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/** Orquesta acceso a DB y API. Expone datos listos para UI. */
 public class FootballRepository {
 
     /** Resultado de obtener jornada actual. */
@@ -94,6 +93,11 @@ public class FootballRepository {
     private final SharedPreferences syncPrefs;
     // Preferencias para selección diaria del mercado (por jugadores.available)
     private static final String PREF_MARKET_DAY = "market_day";
+
+    // Reglas de liga simples (globales por ahora) para cláusulas
+    private static final String PREF_RULES = "league_rules_prefs";
+    public static final String KEY_CLAUSE_ENABLED = "clause_enabled";
+    public static final String KEY_CLAUSE_BLOCK_DAYS = "clause_block_days";
 
     private final MutableLiveData<Boolean> isSyncing = new MutableLiveData<>(false);
     private final MutableLiveData<String> syncStatus = new MutableLiveData<>("");
@@ -182,9 +186,9 @@ public class FootballRepository {
 
     private boolean canFormValid11(int gk, int def, int mid, int fwd) {
         if (gk < 1) return false;
-        // allocate exactly 1 GK
+
         int gkUse = 1;
-        // iterate defenders and mids within bounds and derive forwards
+
         int minDef = 3;
         int minMid = 2; int maxMid = 5;
         int minFwd = 1; int maxFwd = 3;
@@ -193,7 +197,6 @@ public class FootballRepository {
                 int f = 11 - (gkUse + d + m);
                 if (f < minFwd || f > maxFwd) continue;
                 if (f <= fwd) {
-                    // valid combination exists
                     return true;
                 }
             }
@@ -462,7 +465,6 @@ public class FootballRepository {
                 ownershipDao.insert(own);
                 marketDao.markSold(leagueId, playerId);
 
-                // No tocar PlayerEntity.available: la propiedad es por liga
                 if (callback != null) runOnMainThread(callback::onSuccess);
             } catch (Exception e) {
                 if (callback != null) runOnMainThread(() -> callback.onError(e));
@@ -477,6 +479,78 @@ public class FootballRepository {
         cal.set(java.util.Calendar.SECOND, 59);
         cal.set(java.util.Calendar.MILLISECOND, 999);
         return cal.getTimeInMillis();
+    }
+
+    /**
+     * Genera una plantilla inicial para una liga recién creada con un presupuesto objetivo ± tolerancia.
+     * Inserta las propiedades en LeaguePlayerOwnership para el usuario indicado.
+     */
+    public void generateInitialSquadForNewLeague(long leagueId, int targetBudgetMillions, int toleranceMillions, long ownerUserId) {
+        executor.execute(() -> {
+            try {
+                // Candidatos: todos los jugadores no poseídos en esta liga
+                List<PlayerEntity> candidates = playerDao.getAllNotOwnedSync(leagueId);
+                if (candidates == null || candidates.isEmpty()) return;
+                java.util.Collections.shuffle(candidates);
+
+                final int minBudget = Math.max(0, targetBudgetMillions - toleranceMillions);
+                final int maxBudget = targetBudgetMillions + toleranceMillions;
+
+                List<PlayerEntity> picked = new ArrayList<>();
+                int sum = 0;
+
+                // Pase 1: ir añadiendo aleatoriamente mientras no nos pasemos demasiado
+                for (PlayerEntity p : candidates) {
+                    int price = p.getCurrentPrice();
+                    if (price <= 0) continue;
+                    if (sum + price <= maxBudget) {
+                        picked.add(p);
+                        sum += price;
+                        if (sum >= minBudget && sum <= maxBudget) break;
+                    }
+                }
+
+                // Si no alcanzamos el mínimo, intentar segunda pasada sobre restantes
+                if (sum < minBudget) {
+                    for (PlayerEntity p : candidates) {
+                        if (picked.contains(p)) continue;
+                        int price = p.getCurrentPrice();
+                        if (price <= 0) continue;
+                        if (sum + price <= maxBudget) {
+                            picked.add(p);
+                            sum += price;
+                            if (sum >= minBudget) break;
+                        }
+                    }
+                }
+
+                // Búsqueda simple de ajuste: si nos pasamos, intentar quitar el último caro
+                if (sum > maxBudget && !picked.isEmpty()) {
+                    // Quitar el jugador más caro si ayuda a caer dentro del rango
+                    PlayerEntity mostExpensive = picked.get(0);
+                    for (PlayerEntity p : picked) {
+                        if (p.getCurrentPrice() > mostExpensive.getCurrentPrice()) mostExpensive = p;
+                    }
+                    int after = sum - mostExpensive.getCurrentPrice();
+                    if (after >= minBudget && after <= maxBudget) {
+                        picked.remove(mostExpensive);
+                        sum = after;
+                    }
+                }
+
+                // Insertar ownerships
+                long now = System.currentTimeMillis();
+                for (PlayerEntity p : picked) {
+                    com.example.housemanager.database.entities.LeaguePlayerOwnership own = new com.example.housemanager.database.entities.LeaguePlayerOwnership();
+                    own.setLeagueId(leagueId);
+                    own.setPlayerId(p.getPlayerId());
+                    own.setOwnerUserId(ownerUserId);
+                    own.setAcquiredPrice(Math.max(0, p.getCurrentPrice()));
+                    own.setAcquiredAtMillis(now);
+                    try { ownershipDao.insert(own); } catch (Exception ignored) { }
+                }
+            } catch (Exception ignored) { }
+        });
     }
 
     /** Calcula el próximo instante (hoy o mañana) a la hora HH:mm indicada por la liga. */
@@ -811,6 +885,11 @@ public class FootballRepository {
             }
             return out;
         });
+    }
+
+    /** Tiempos de adquisición de mis jugadores (para bloqueos de cláusula). */
+    public androidx.lifecycle.LiveData<java.util.List<com.example.housemanager.database.pojo.OwnershipTime>> getMyOwnershipTimes(long leagueId, long ownerUserId) {
+        return ownershipDao.getMyOwnershipTimes(leagueId, ownerUserId);
     }
 
     /** Búsqueda simple para el mercado. */

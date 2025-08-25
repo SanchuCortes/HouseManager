@@ -1,7 +1,7 @@
 package com.example.housemanager.api.models;
 
 /**
- * DTO de competición (v4). Debe incluir currentSeason con currentMatchday.
+ * DTO de competición Debe incluir currentSeason con currentMatchday.
  */
 public class CompetitionAPI {
     private int id;

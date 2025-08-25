@@ -34,7 +34,7 @@ public class MatchEntity {
     @ColumnInfo(name = "awayTeamName")
     private String awayTeamName;
 
-    // Fecha/hora en milisegundos desde epoch (UTC)
+    // Fecha/hora en milisegundos desde epoch
     @ColumnInfo(name = "utcDateMillis")
     private long utcDateMillis;
 

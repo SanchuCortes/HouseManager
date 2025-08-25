@@ -19,7 +19,6 @@
             app:titleTextColor="@color/text_dark"
             app:navigationIconTint="@color/text_dark" />
 
-        <!-- Buscador -->
         <EditText
             android:id="@+id/searchEditText"
             android:layout_width="match_parent"
@@ -31,7 +30,6 @@
             android:background="@color/card_background"
             android:layout_margin="12dp" />
 
-        <!-- Chips posiciones -->
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -95,7 +93,6 @@
                 android:textColor="@color/text_dark" />
         </LinearLayout>
 
-        <!-- Filtros avanzados -->
         <LinearLayout
             android:id="@+id/advancedFiltersLayout"
             android:orientation="horizontal"
@@ -121,7 +118,6 @@
                 android:popupBackground="@color/card_background" />
         </LinearLayout>
 
-        <!-- Acciones -->
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -159,7 +155,6 @@
                 android:textColor="@color/text_dark" />
         </LinearLayout>
 
-        <!-- Estado / contadores -->
         <TextView
             android:id="@+id/textTotalPlayers"
             android:layout_width="match_parent"
@@ -180,7 +175,6 @@
             android:paddingEnd="12dp"
             android:paddingBottom="8dp" />
 
-        <!-- Loading -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
@@ -200,7 +194,6 @@
             android:layout_gravity="center_horizontal"
             android:padding="8dp" />
 
-        <!-- Lista -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewPlayers"
             android:layout_width="match_parent"
@@ -208,7 +201,6 @@
             android:layout_weight="1"
             android:padding="8dp" />
 
-        <!-- Sin resultados -->
         <TextView
             android:id="@+id/textNoResults"
             android:layout_width="match_parent"
@@ -220,3 +212,5 @@
             android:visibility="gone" />
     </LinearLayout>
 </layout>
+
+

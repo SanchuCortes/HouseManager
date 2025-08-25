@@ -28,7 +28,7 @@ public class TeamEntity {
     public String getName() { return name; }
     public String getCrestUrl() { return crestUrl; }
 
-    // SETTERS por si haces inserts/updates manuales
+    // SETTERS
     public void setTeamId(int teamId) { this.teamId = teamId; }
     public void setName(@NonNull String name) { this.name = name; }
     public void setCrestUrl(@NonNull String crestUrl) { this.crestUrl = crestUrl; }

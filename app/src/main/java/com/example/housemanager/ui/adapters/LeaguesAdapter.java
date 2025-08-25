@@ -1,4 +1,4 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.adapters;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,9 +10,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.housemanager.R;
+import com.example.housemanager.ui.leagues.LeagueDetailActivity;
+import com.example.housemanager.ui.leagues.LeagueManager;
+
 import java.util.List;
 
-// Pinta nombre, tipo, participantes y estado. Abre detalle al pulsar.
+// Muestra nombre, tipo, participantes y estado. Al pulsar, abre el detalle.
 public class LeaguesAdapter extends RecyclerView.Adapter<LeaguesAdapter.LeagueViewHolder> {
 
     private final List<LeagueManager.League> leagues;
@@ -52,7 +56,7 @@ public class LeaguesAdapter extends RecyclerView.Adapter<LeaguesAdapter.LeagueVi
             i.putExtra("EXTRA_PARTICIPANTS", league.getParticipants());
             // Pasar el id real de la liga si está disponible
             if (leagueIds != null && position < leagueIds.size()) {
-                i.putExtra("EXTRA_LEAGUE_ID", leagueIds.get(position).longValue());
+                i.putExtra(LeagueDetailActivity.EXTRA_LEAGUE_ID, leagueIds.get(position).longValue());
             }
             context.startActivity(i);
         });

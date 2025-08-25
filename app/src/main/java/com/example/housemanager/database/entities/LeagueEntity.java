@@ -16,7 +16,7 @@ public class LeagueEntity {
     @ColumnInfo(name = "name")
     private String name = "";
 
-    // "Privada" / "Comunitaria" u otro texto descriptivo
+    // "Privada" / "Comunitaria"
     @NonNull
     @ColumnInfo(name = "type")
     private String type = "Privada";

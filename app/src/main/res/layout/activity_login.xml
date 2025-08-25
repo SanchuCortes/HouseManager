@@ -9,9 +9,9 @@
     android:gravity="center"
     android:background="@drawable/background_field_enhanced"
     android:padding="32dp"
-    tools:context=".LoginActivity">
+    tools:context=".ui.main.LoginActivity">
 
-    <!-- Logo y título superior -->
+    
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,7 +19,7 @@
         android:gravity="center"
         android:layout_marginBottom="48dp">
 
-        <!-- Logo de la app -->
+        
         <ImageView
             android:layout_width="280dp"
             android:layout_height="100dp"
@@ -28,7 +28,7 @@
             android:scaleType="fitCenter"
             android:src="@drawable/homefield_logo" />
 
-        <!-- Subtítulo -->
+        
         <TextView
             style="@style/TextSecondary"
             android:layout_width="wrap_content"
@@ -39,7 +39,7 @@
 
     </LinearLayout>
 
-    <!-- Card de login -->
+    
     <com.google.android.material.card.MaterialCardView
         style="@style/CardPrimary"
         android:layout_width="match_parent"
@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Título del login -->
+            
             <TextView
                 style="@style/TextSubtitle"
                 android:layout_width="wrap_content"
@@ -61,7 +61,7 @@
                 android:layout_marginBottom="24dp"
                 android:layout_gravity="center" />
 
-            <!-- Campo Email -->
+            
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -82,7 +82,7 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Campo Contraseña -->
+            
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -105,7 +105,7 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Botón Login -->
+            
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_login"
                 style="@style/ButtonPrimary"
@@ -114,7 +114,7 @@
                 android:text="Iniciar Sesión"
                 android:layout_marginBottom="16dp" />
 
-            <!-- Enlace para registro -->
+            
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -145,7 +145,7 @@
 
             </LinearLayout>
 
-            <!-- Enlace "¿Olvidaste tu contraseña?" -->
+            
             <TextView
                 android:id="@+id/tv_forgot_password"
                 style="@style/TextSecondary"
@@ -164,7 +164,7 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Divisor -->
+    
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -194,7 +194,7 @@
 
     </LinearLayout>
 
-    <!-- Botón Google Sign-In -->
+    
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_google_signin"
         style="@style/ButtonSecondary"
@@ -208,3 +208,4 @@
         app:iconSize="20dp" />
 
 </LinearLayout>
+

@@ -1,4 +1,4 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.leagues;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,8 +9,14 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.example.housemanager.MyTeamActivity;
+import com.example.housemanager.R;
+import com.example.housemanager.ui.market.TransferMarketActivity;
+
 // Muestra los datos de la liga y accesos rápidos.
 public class LeagueDetailActivity extends AppCompatActivity {
+
+    public static final String EXTRA_LEAGUE_ID = "EXTRA_LEAGUE_ID";
 
     private String leagueName;
     private long leagueId = 1L;
@@ -44,8 +50,13 @@ public class LeagueDetailActivity extends AppCompatActivity {
         String market = getIntent().getStringExtra("EXTRA_MARKET_HOUR");
         String teamType = getIntent().getStringExtra("EXTRA_TEAM_TYPE");
         int participants = getIntent().getIntExtra("EXTRA_PARTICIPANTS", 0);
-        // Leer leagueId real si viene en el intent
-        long lidExtra = getIntent().getLongExtra("EXTRA_LEAGUE_ID", 1L);
+        // Leer leagueId real si viene en el intent (obligatorio)
+        long lidExtra = getIntent().getLongExtra(EXTRA_LEAGUE_ID, -1L);
+        if (lidExtra <= 0) {
+            android.widget.Toast.makeText(this, "Falta leagueId", android.widget.Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
         this.leagueId = lidExtra;
 
         // Pinto textos básicos.
@@ -75,15 +86,12 @@ public class LeagueDetailActivity extends AppCompatActivity {
         // Placeholders.
         btnClass.setOnClickListener(v -> {
                 Intent intent = new Intent(this, ClassificationActivity.class);
-                long lid = getIntent().getLongExtra("EXTRA_LEAGUE_ID", 1L);
-                intent.putExtra(ClassificationActivity.EXTRA_LEAGUE_ID, lid);
+                intent.putExtra(ClassificationActivity.EXTRA_LEAGUE_ID, leagueId);
                 startActivity(intent);
         });
         btnTransfers.setOnClickListener(v -> {
                 Intent intent = new Intent(this, TransferMarketActivity.class);
-                // Pasar id de liga si llegó en el intent
-                long lid = getIntent().getLongExtra("EXTRA_LEAGUE_ID", 1L);
-                intent.putExtra("EXTRA_LEAGUE_ID", lid);
+                intent.putExtra(TransferMarketActivity.EXTRA_LEAGUE_ID, leagueId);
                 startActivity(intent);
         });
     }

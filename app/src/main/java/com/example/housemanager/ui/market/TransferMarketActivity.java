@@ -1,6 +1,5 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.market;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -12,7 +11,6 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -23,6 +21,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.housemanager.R;
 import com.example.housemanager.market.Player;
 import com.example.housemanager.repository.FootballRepository;
 import com.example.housemanager.ui.adapters.TransferMarketAdapter;
@@ -35,6 +34,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class TransferMarketActivity extends AppCompatActivity implements TransferMarketAdapter.OnPlayerClickListener {
+
+    public static final String EXTRA_LEAGUE_ID = "EXTRA_LEAGUE_ID";
 
     private static final String TAG = "TransferMarketActivity";
     private static final int MARKET_PLAYERS_COUNT = 10;
@@ -76,8 +77,11 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
         repository = FootballRepository.getInstance(this);
         viewModel = new ViewModelProvider(this).get(FootballViewModel.class);
 
-        // Leer leagueId del intent (por ahora default=1 si no se envía)
-        leagueId = getIntent().getLongExtra("EXTRA_LEAGUE_ID", 1L);
+        // Leer leagueId del intent con control estricto (fail-fast)
+        leagueId = com.example.housemanager.util.LeagueArgs.requireLeagueId(this);
+        if (leagueId <= 0) {
+            return;
+        }
 
         initViews();
         setupToolbar();

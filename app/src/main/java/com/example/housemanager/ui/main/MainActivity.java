@@ -1,4 +1,4 @@
-package com.example.housemanager;
+package com.example.housemanager.ui.main;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,7 +7,6 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -16,7 +15,12 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.example.housemanager.MyTeamActivity;
+import com.example.housemanager.R;
+import com.example.housemanager.ui.market.TransferMarketActivity;
 import com.example.housemanager.repository.FootballRepository;
+import com.example.housemanager.ui.leagues.CreateLeagueActivity;
+import com.example.housemanager.ui.leagues.LeaguesActivity;
 import com.google.android.material.navigation.NavigationView;
 
 /**
@@ -98,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         tvActiveLeagues = findViewById(R.id.tv_active_leagues);
         tvIncompleteLineups = findViewById(R.id.tv_incomplete_lineups);
 
-        // Elementos de progreso (pueden no existir en todos los layouts)
+        // Indicadores de progreso (puede que no estén en todos los layouts)
         progressSync = findViewById(R.id.progress_sync);
         tvSyncStatus = findViewById(R.id.tv_sync_status);
 
@@ -150,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     /**
-     * Configura los listeners de todos los botones
+     * Dejamos los botones listos (clicks y accesos rápidos)
      */
     private void setupButtons() {
         Log.d(TAG, "Configurando listeners de botones");
@@ -190,8 +194,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 // Verificar que tengamos datos antes de ir al mercado
                 repository.getAvailablePlayersCount().observe(this, count -> {
                     if (count != null && count > 0) {
-                        Log.d(TAG, "Navegando al mercado con " + count + " jugadores disponibles");
-                        startActivity(new Intent(this, TransferMarketActivity.class));
+                        Log.d(TAG, "Abrir Mis Ligas para elegir una y navegar con leagueId real (" + count + " jugadores disponibles)");
+                        // Redirigimos a Mis Ligas para seleccionar liga y pasar su id real
+                        startActivity(new Intent(this, LeaguesActivity.class));
                     } else {
                         Log.d(TAG, "No hay jugadores disponibles todavía");
                         com.google.android.material.snackbar.Snackbar.make(v,
@@ -207,10 +212,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (tvActiveLeagues != null) {
             tvActiveLeagues.setOnLongClickListener(v -> {
                 Log.d(TAG, "Acceso directo a Mi Equipo activado");
-                Intent intent = new Intent(this, MyTeamActivity.class);
-                intent.putExtra(MyTeamActivity.EXTRA_TEAM_ID, 1);
-                intent.putExtra(MyTeamActivity.EXTRA_LEAGUE_NAME, "Liga de Prueba");
-                startActivity(intent);
+                // Para evitar mezclar ligas, redirigimos a Mis Ligas para seleccionar una y abrir Mi Equipo con su id real
+                startActivity(new Intent(this, LeaguesActivity.class));
                 return true;
             });
         }

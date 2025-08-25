@@ -16,7 +16,7 @@
         android:orientation="horizontal"
         android:padding="16dp">
 
-        <!-- Icono de la liga DINÁMICO -->
+        
         <ImageView
             android:id="@+id/iv_league_icon"
             android:layout_width="48dp"
@@ -27,14 +27,14 @@
             android:layout_marginEnd="16dp"
             android:layout_gravity="center_vertical" />
 
-        <!-- Información de la liga -->
+        
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <!-- Nombre de la liga -->
+            
             <TextView
                 android:id="@+id/tv_league_name"
                 style="@style/TextSubtitle"
@@ -44,7 +44,7 @@
                 android:textColor="@color/accent_gold"
                 android:layout_marginBottom="4dp" />
 
-            <!-- Descripción -->
+            
             <TextView
                 android:id="@+id/tv_league_description"
                 style="@style/TextBody"
@@ -53,7 +53,7 @@
                 android:text="La liga de los campeones"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Participantes -->
+            
             <TextView
                 android:id="@+id/tv_participants"
                 style="@style/TextSecondary"
@@ -68,7 +68,7 @@
 
         </LinearLayout>
 
-        <!-- Estado y flecha -->
+        
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -76,7 +76,7 @@
             android:gravity="center"
             android:layout_gravity="center_vertical">
 
-            <!-- Estado de la liga -->
+            
             <TextView
                 android:id="@+id/tv_status"
                 style="@style/TextSecondary"
@@ -87,7 +87,7 @@
                 android:textSize="12sp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Flecha -->
+            
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -99,3 +99,4 @@
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>
+

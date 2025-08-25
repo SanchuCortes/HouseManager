@@ -35,16 +35,15 @@ public abstract class HouseManagerDatabase extends RoomDatabase {
     public abstract com.example.housemanager.database.dao.CaptainDao captainDao();
     public abstract com.example.housemanager.database.dao.PlayerMatchPointsDao playerMatchPointsDao();
 
-    // New DAOs for points calculation support
+
     public abstract com.example.housemanager.database.dao.MatchEventDao matchEventDao();
     public abstract com.example.housemanager.database.dao.LineupEntryDao lineupEntryDao();
     public abstract com.example.housemanager.database.dao.PlayerPointsHistoryDao playerPointsHistoryDao();
 
-    // Migration 8 -> 9: add updatedAt column to players
     private static final Migration MIGRATION_8_9 = new Migration(8, 9) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase db) {
-            // Add column only if not already present (ALTER TABLE is safe to run once; schema version ensures no re-run)
+
             db.execSQL("ALTER TABLE players ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0");
             Log.d(TAG, "MIGRATION_8_9 ejecutada correctamente: añadida columna players.updatedAt");
         }
