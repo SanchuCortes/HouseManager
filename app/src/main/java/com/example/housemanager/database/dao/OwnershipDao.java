@@ -16,11 +16,31 @@ public interface OwnershipDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(LeaguePlayerOwnership ownership);
 
+    // Conteo por posición para una liga/usuario (sync)
+    @Query("SELECT p.position AS position, COUNT(*) AS count FROM players p JOIN LeaguePlayerOwnership o ON o.playerId = p.playerId WHERE o.leagueId = :leagueId AND o.ownerUserId = :userId GROUP BY p.position")
+    java.util.List<com.example.housemanager.database.pojo.PositionCount> getPositionCountsSync(long leagueId, long userId);
+
     @Query("SELECT COUNT(*) FROM LeaguePlayerOwnership WHERE leagueId = :leagueId AND playerId = :playerId")
     int isOwnedInLeague(long leagueId, long playerId);
 
     @Query("SELECT playerId FROM LeaguePlayerOwnership WHERE leagueId = :leagueId AND ownerUserId = :ownerUserId")
     LiveData<List<Long>> getOwnedPlayerIdsLive(long leagueId, long ownerUserId);
+
+    // Lectura sincrónica: todas las propiedades para un jugador (para PlayerMatchPoints por liga)
+    @Query("SELECT * FROM LeaguePlayerOwnership WHERE playerId = :playerId")
+    List<LeaguePlayerOwnership> getOwnershipsForPlayerSync(int playerId);
+
+    // Mi equipo por liga/usuario (unir con players)
+    @Query("SELECT p.* FROM players p JOIN LeaguePlayerOwnership o ON o.playerId = p.playerId WHERE o.leagueId = :leagueId AND o.ownerUserId = :userId ORDER BY p.position, p.name")
+    LiveData<List<com.example.housemanager.database.entities.PlayerEntity>> getMySquad(long leagueId, long userId);
+
+    // Valor de mi plantilla en una liga (suma de precios)
+    @Query("SELECT COALESCE(SUM(p.currentPrice), 0) FROM LeaguePlayerOwnership o JOIN players p ON p.playerId = o.playerId WHERE o.leagueId = :leagueId AND o.ownerUserId = :userId")
+    LiveData<Integer> getMySquadValueLive(long leagueId, long userId);
+
+    // Ids de jugadores poseídos por una liga (sync)
+    @Query("SELECT playerId FROM LeaguePlayerOwnership WHERE leagueId = :leagueId")
+    List<Integer> getPlayerIdsOwnedByLeagueSync(long leagueId);
 
     /**
      * Clasificación por liga: suma de puntos de jugadores por propietario.
@@ -49,4 +69,7 @@ public interface OwnershipDao {
            "GROUP BY o.ownerUserId " +
            "ORDER BY totalPoints DESC")
     LiveData<List<com.example.housemanager.database.pojo.ManagerScoreRow>> getLeagueClassificationSeason(long leagueId);
+
+    @Query("DELETE FROM LeaguePlayerOwnership WHERE leagueId = :leagueId")
+    void deleteByLeague(long leagueId);
 }

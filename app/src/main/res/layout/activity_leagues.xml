@@ -130,6 +130,18 @@
 
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Botón flotante para borrar liga -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_delete_league"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="88dp"
+        android:src="@drawable/ic_clear"
+        app:backgroundTint="@color/error_red"
+        app:tint="@color/white" />
+
     <!-- Botón flotante para crear liga -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_create_league"

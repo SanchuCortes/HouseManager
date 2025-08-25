@@ -19,4 +19,7 @@ public interface CaptainDao {
 
     @Query("SELECT * FROM Captains WHERE leagueId = :leagueId AND ownerUserId = :ownerUserId LIMIT 1")
     Captain getCaptainSync(long leagueId, long ownerUserId);
+
+    @Query("DELETE FROM Captains WHERE leagueId = :leagueId")
+    void deleteCaptainByLeague(long leagueId);
 }

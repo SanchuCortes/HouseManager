@@ -173,8 +173,8 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
     }
 
     private void setupObservers() {
-        // Listado del mercado: 10 aleatorios desde Room
-        repository.getMarketPlayers().observe(this, players -> {
+        // Listado del mercado de la liga actual (no repone al comprar; máximo 10 iniciales)
+        repository.getLeagueMarketPlayers(leagueId).observe(this, players -> {
             allMarketPlayers.clear();
             if (players != null) {
                 allMarketPlayers.addAll(players);
@@ -209,6 +209,19 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
     private void generateInitialMarket() {
         // Cargar los datos si no están
         viewModel.loadTeams();
+        // Asegurar que el mercado de la liga esté generado según la hora configurada
+        repository.ensureLeagueMarketGenerated(leagueId, null);
+        // Idempotente: recalcular puntos acumulados de todas las jornadas FINISHED en background,
+        // de forma que los totales aparezcan correctos en el mercado aunque el usuario entre pronto.
+        repository.recalcAllFinishedPoints(new FootballRepository.SyncCallback() {
+            @Override public void onSuccess() {
+                android.util.Log.d(TAG, "Recalc puntos OK (mercado)");
+            }
+            @Override public void onError(Throwable t) {
+                android.util.Log.w(TAG, "Recalc puntos fallo (mercado): " + t.getMessage());
+            }
+            @Override public void onProgress(String message, int current, int total) { }
+        });
     }
 
     private void generateMarketFromPlayers(List<Player> players) {
@@ -263,13 +276,23 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
             }
         }
 
-        adapter.updatePlayers(filteredPlayers);
+        // Ordenar por puntos descendente para dar visibilidad a quienes ya han puntuado
+        Collections.sort(filteredPlayers, (a, b) -> Integer.compare(b.getTotalPoints(), a.getTotalPoints()));
+
+        // Limitar a 10 jugadores visibles como máximo
+        if (filteredPlayers.size() > MARKET_PLAYERS_COUNT) {
+            java.util.List<Player> firstTen = new java.util.ArrayList<>(filteredPlayers.subList(0, MARKET_PLAYERS_COUNT));
+            adapter.updatePlayers(firstTen);
+        } else {
+            adapter.updatePlayers(filteredPlayers);
+        }
         updatePlayersCount();
     }
 
     private void updatePlayersCount() {
         if (tvPlayersCount != null) {
-            tvPlayersCount.setText("Mostrando: " + filteredPlayers.size() + " de " + allMarketPlayers.size() + " jugadores");
+            int shown = Math.min(filteredPlayers.size(), MARKET_PLAYERS_COUNT);
+            tvPlayersCount.setText("Mostrando: " + shown + " jugadores");
         }
     }
 
@@ -384,7 +407,7 @@ public class TransferMarketActivity extends AppCompatActivity implements Transfe
 
     private void buyPlayer(Player player) {
         // Marcar como no disponible en la BD (sin reponer automáticamente)
-        repository.buyPlayer(player.getPlayerId(), new FootballRepository.SyncCallback() {
+        repository.buyPlayer(leagueId, player.getPlayerId(), 1L, new FootballRepository.SyncCallback() {
             @Override
             public void onSuccess() {
                 runOnUiThread(() -> {

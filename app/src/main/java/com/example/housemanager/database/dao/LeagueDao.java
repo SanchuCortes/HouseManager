@@ -29,4 +29,11 @@ public interface LeagueDao {
     // Obtiene una liga por id (para leer marketHour)
     @Query("SELECT * FROM leagues WHERE id = :id LIMIT 1")
     LeagueEntity getByIdSync(long id);
+
+    // Presupuesto en vivo para una liga concreta
+    @Query("SELECT budget FROM leagues WHERE id = :id LIMIT 1")
+    LiveData<Integer> getBudgetLive(long id);
+
+    @Query("DELETE FROM leagues WHERE id = :id")
+    void deleteLeagueCore(long id);
 }

@@ -19,4 +19,7 @@ public interface MarketStateDao {
 
     @Query("SELECT * FROM MarketState WHERE leagueId = :leagueId LIMIT 1")
     MarketState getSync(long leagueId);
+
+    @Query("DELETE FROM MarketState WHERE leagueId = :leagueId")
+    void deleteByLeague(long leagueId);
 }

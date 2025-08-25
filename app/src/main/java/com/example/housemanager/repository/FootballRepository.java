@@ -71,6 +71,7 @@ public class FootballRepository {
 
     private static FootballRepository instance;
 
+    private final HouseManagerDatabase db;
     private final PlayerDao playerDao;
     private final TeamDao teamDao;
     private final com.example.housemanager.database.dao.LeagueDao leagueDao;
@@ -98,7 +99,7 @@ public class FootballRepository {
     private final MutableLiveData<String> syncStatus = new MutableLiveData<>("");
 
     private FootballRepository(Context context) {
-        HouseManagerDatabase db = HouseManagerDatabase.getInstance(context);
+        db = HouseManagerDatabase.getInstance(context);
         playerDao = db.playerDao();
         teamDao = db.teamDao();
         leagueDao = db.leagueDao();
@@ -147,12 +148,57 @@ public class FootballRepository {
         return leagueDao.countActiveLeagues();
     }
 
-    /** Alineación incompleta para el dashboard. */
-    public LiveData<Boolean> isLineupIncomplete(int userId, int matchday) {
-        return Transformations.map(
-                lineupDao.isLineupIncompleteInt(userId, matchday),
-                value -> value != null && value > 0
-        );
+    /**
+     * Cuenta cuántas ligas del usuario NO pueden formar una alineación válida de 11
+     * cumpliendo las reglas: 1 GK, DEF >=3, MID [2..5], FWD [1..3].
+     * No se usa observeForever ni esquemas de lineups por jornada.
+     */
+    public LiveData<Integer> getIncompleteLineupsLeaguesCount(long userId) {
+        return Transformations.map(leagueDao.getAllLeagues(), leagues -> {
+            int incomplete = 0;
+            if (leagues == null || leagues.isEmpty()) return 0;
+            for (com.example.housemanager.database.entities.LeagueEntity lg : leagues) {
+                if (lg == null) continue;
+                long lid = lg.getId();
+                int gk = 0, def = 0, mid = 0, fwd = 0;
+                try {
+                    java.util.List<com.example.housemanager.database.pojo.PositionCount> pcs = ownershipDao.getPositionCountsSync(lid, userId);
+                    if (pcs != null) {
+                        for (com.example.housemanager.database.pojo.PositionCount pc : pcs) {
+                            if (pc == null || pc.position == null) continue;
+                            String p = pc.position;
+                            if ("Portero".equalsIgnoreCase(p) || "GK".equalsIgnoreCase(p)) gk = pc.count;
+                            else if ("Defensa".equalsIgnoreCase(p) || "DEF".equalsIgnoreCase(p)) def = pc.count;
+                            else if ("Medio".equalsIgnoreCase(p) || "Centrocampista".equalsIgnoreCase(p) || "MID".equalsIgnoreCase(p)) mid = pc.count;
+                            else if ("Delantero".equalsIgnoreCase(p) || "FWD".equalsIgnoreCase(p)) fwd = pc.count;
+                        }
+                    }
+                } catch (Exception ignored) { }
+                if (!canFormValid11(gk, def, mid, fwd)) incomplete++;
+            }
+            return incomplete;
+        });
+    }
+
+    private boolean canFormValid11(int gk, int def, int mid, int fwd) {
+        if (gk < 1) return false;
+        // allocate exactly 1 GK
+        int gkUse = 1;
+        // iterate defenders and mids within bounds and derive forwards
+        int minDef = 3;
+        int minMid = 2; int maxMid = 5;
+        int minFwd = 1; int maxFwd = 3;
+        for (int d = Math.max(minDef, 0); d <= def; d++) {
+            for (int m = Math.max(minMid, 0); m <= Math.min(maxMid, mid); m++) {
+                int f = 11 - (gkUse + d + m);
+                if (f < minFwd || f > maxFwd) continue;
+                if (f <= fwd) {
+                    // valid combination exists
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Equipos listos para UI. */
@@ -177,6 +223,16 @@ public class FootballRepository {
     /** Devuelve los 10 partidos disponibles ordenados por fecha (tras sync de jornada). */
     public LiveData<List<MatchEntity>> getUpcoming10MatchesLive() {
         return matchDao.getUpcoming10();
+    }
+
+    /** Partidos por rango (LiveData). */
+    public LiveData<List<MatchEntity>> getMatchesInRangeLive(long fromMillis, long toMillis) {
+        return matchDao.getMatchesInRange(fromMillis, toMillis);
+    }
+
+    /** Últimos finalizados (LiveData). */
+    public LiveData<List<MatchEntity>> getLastFinishedLive(int limit) {
+        return matchDao.getLastFinished(limit);
     }
 
     /**
@@ -247,6 +303,16 @@ public class FootballRepository {
         });
     }
 
+    /** Valor de mi plantilla por liga/usuario (suma de precios). */
+    public LiveData<Integer> getMySquadValueLive(long leagueId, long userId) {
+        return ownershipDao.getMySquadValueLive(leagueId, userId);
+    }
+
+    /** Presupuesto de la liga (LiveData). */
+    public LiveData<Integer> getLeagueBudgetLive(long leagueId) {
+        return leagueDao.getBudgetLive(leagueId);
+    }
+
     /** Clasificación de la jornada actual (aplica capitán x2 sobre puntos de ese partido). */
     public LiveData<List<ManagerScore>> getLeagueClassificationThisMatchday(long leagueId, int matchday) {
         LiveData<List<ManagerScoreRow>> rows = ownershipDao.getLeagueClassificationThisMatchday(leagueId, matchday);
@@ -303,6 +369,8 @@ public class FootballRepository {
                 marketDao.clearLeagueMarket(leagueId);
 
                 // Obtener todos los jugadores no poseídos
+                List<Integer> ownedIds = ownershipDao.getPlayerIdsOwnedByLeagueSync(leagueId);
+                int excludedOwned = (ownedIds != null) ? ownedIds.size() : 0;
                 List<PlayerEntity> candidates = playerDao.getAllNotOwnedSync(leagueId);
                 java.util.Collections.shuffle(candidates);
                 int count = Math.min(10, candidates.size());
@@ -339,6 +407,7 @@ public class FootballRepository {
                     newState.setLastGeneratedAtMillis(now);
                     newState.setMarketExpiresAtMillis(expiresAt);
                     marketStateDao.upsert(newState);
+                    Log.d("[Market]", "ensureDailyMarket league=" + leagueId + " picked=" + listings.size() + " excludedOwned=" + excludedOwned);
                 }
 
                 if (callback != null) runOnMainThread(callback::onSuccess);
@@ -348,58 +417,52 @@ public class FootballRepository {
         });
     }
 
-    /** Devuelve jugadores del mercado actual de una liga, uniendo listings con PlayerEntity. */
+    /** Devuelve jugadores del mercado actual de una liga, usando proyección con puntos acumulados. */
     public LiveData<List<Player>> getLeagueMarketPlayers(long leagueId) {
-        androidx.lifecycle.MediatorLiveData<List<Player>> out = new androidx.lifecycle.MediatorLiveData<>();
-        LiveData<List<com.example.housemanager.database.entities.MarketListing>> source = marketDao.getLiveListings(leagueId);
-        out.addSource(source, listings -> {
-            executor.execute(() -> {
-                try {
+        return Transformations.map(
+                marketDao.getMarketRows(leagueId),
+                rows -> {
                     List<Player> result = new ArrayList<>();
-                    if (listings != null && !listings.isEmpty()) {
-                        List<Integer> ids = new ArrayList<>();
-                        for (com.example.housemanager.database.entities.MarketListing ml : listings) {
-                            ids.add((int) ml.getPlayerId());
-                        }
-                        List<PlayerEntity> entities = playerDao.getByIdsSync(ids);
-                        // index by id for quick lookup
-                        java.util.Map<Integer, PlayerEntity> map = new java.util.HashMap<>();
-                        for (PlayerEntity e : entities) map.put(e.getPlayerId(), e);
-                        for (com.example.housemanager.database.entities.MarketListing ml : listings) {
-                            PlayerEntity e = map.get((int) ml.getPlayerId());
-                            if (e != null) {
-                                result.add(convertEntityToMarketPlayer(e));
-                            }
-                        }
+                    if (rows == null) return result;
+                    for (com.example.housemanager.database.pojo.MarketPlayerRow r : rows) {
+                        Player p = new Player();
+                        p.setPlayerId(r.playerId);
+                        p.setName(r.name);
+                        p.setPosition(r.position);
+                        p.setTeamId(r.teamId);
+                        p.setTeamName(r.teamDisplay != null ? r.teamDisplay : "");
+                        p.setCurrentPrice(r.price);
+                        p.setTotalPoints(r.displayPoints);
+                        result.add(p);
                     }
-                    out.postValue(result);
-                } catch (Exception ex) {
-                    out.postValue(new ArrayList<>());
+                    return result;
                 }
-            });
-        });
-        return out;
+        );
     }
 
     /** Compra en liga: marca ownership y listing vendido. No repone. */
     public void buyPlayer(long leagueId, int playerId, long ownerUserId, @Nullable SyncCallback callback) {
         executor.execute(() -> {
             try {
-                // Insertar propiedad en la liga
+                Log.d("[Ownership]", "buying league=" + leagueId + " player=" + playerId);
+                // Comprobar que no esté ya en propiedad en esta liga
+                if (ownershipDao.isOwnedInLeague(leagueId, playerId) > 0) {
+                    throw new IllegalStateException("Already owned in this league");
+                }
+                // TODO: comprobar y descontar presupuesto del usuario para la liga si existe entidad de membership
+
+                // Insertar propiedad y marcar vendido (idealmente en transacción)
+                // Dado que tenemos PK (leagueId, playerId) UNIQUE, si hay carrera, fallará la inserción
                 com.example.housemanager.database.entities.LeaguePlayerOwnership own = new com.example.housemanager.database.entities.LeaguePlayerOwnership();
                 own.setLeagueId(leagueId);
                 own.setPlayerId(playerId);
                 own.setOwnerUserId(ownerUserId);
-                own.setAcquiredPrice(0); // si no hay precio de compra almacenado aún
+                own.setAcquiredPrice(0);
                 own.setAcquiredAtMillis(System.currentTimeMillis());
                 ownershipDao.insert(own);
-
-                // Marcar listing como vendido
                 marketDao.markSold(leagueId, playerId);
 
-                // Opcional: también marcar no disponible globalmente si aplica a un pool global (mantener actual comportamiento)
-                playerDao.markAsBought(playerId);
-
+                // No tocar PlayerEntity.available: la propiedad es por liga
                 if (callback != null) runOnMainThread(callback::onSuccess);
             } catch (Exception e) {
                 if (callback != null) runOnMainThread(() -> callback.onError(e));
@@ -512,6 +575,141 @@ public class FootballRepository {
     }
 
     /** Sincroniza partidos próximos de la semana desde la API y los guarda en Room. */
+    /** Descarga y persiste detalle de un partido: alineaciones, goles/asistencias y tarjetas. */
+    public void syncMatchDetails(long matchId) {
+        executor.execute(() -> {
+            try {
+                retrofit2.Response<com.example.housemanager.api.models.MatchDetailResponse> detResp = apiService.getMatchDetail(matchId).execute();
+                if (!detResp.isSuccessful() || detResp.body() == null) return;
+                com.example.housemanager.api.models.MatchDetailResponse d = detResp.body();
+                // Necesitamos el MatchEntity para teamIds
+                List<MatchEntity> all = matchDao.getAllSync();
+                MatchEntity m = null;
+                if (all != null) {
+                    for (MatchEntity x : all) { if (x != null && x.getMatchId() == matchId) { m = x; break; } }
+                }
+                if (m == null) return;
+                // Alineaciones
+                lineupEntryDao.clearByMatch(matchId);
+                java.util.List<com.example.housemanager.database.entities.LineupEntryEntity> entries = new java.util.ArrayList<>();
+                if (d.getHomeTeamLineup() != null) {
+                    for (com.example.housemanager.api.models.LineupEntryAPI le : d.getHomeTeamLineup().getStartXI()) {
+                        if (le != null && le.getPlayer() != null) {
+                            com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
+                            e.setMatchId(matchId);
+                            e.setPlayerId(le.getPlayer().getId());
+                            e.setTeamId((int) m.getHomeTeamId());
+                            e.setRole("STARTER");
+                            entries.add(e);
+                        }
+                    }
+                    for (com.example.housemanager.api.models.LineupEntryAPI le : d.getHomeTeamLineup().getSubstitutes()) {
+                        if (le != null && le.getPlayer() != null) {
+                            com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
+                            e.setMatchId(matchId);
+                            e.setPlayerId(le.getPlayer().getId());
+                            e.setTeamId((int) m.getHomeTeamId());
+                            e.setRole("SUB");
+                            entries.add(e);
+                        }
+                    }
+                }
+                if (d.getAwayTeamLineup() != null) {
+                    for (com.example.housemanager.api.models.LineupEntryAPI le : d.getAwayTeamLineup().getStartXI()) {
+                        if (le != null && le.getPlayer() != null) {
+                            com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
+                            e.setMatchId(matchId);
+                            e.setPlayerId(le.getPlayer().getId());
+                            e.setTeamId((int) m.getAwayTeamId());
+                            e.setRole("STARTER");
+                            entries.add(e);
+                        }
+                    }
+                    for (com.example.housemanager.api.models.LineupEntryAPI le : d.getAwayTeamLineup().getSubstitutes()) {
+                        if (le != null && le.getPlayer() != null) {
+                            com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
+                            e.setMatchId(matchId);
+                            e.setPlayerId(le.getPlayer().getId());
+                            e.setTeamId((int) m.getAwayTeamId());
+                            e.setRole("SUB");
+                            entries.add(e);
+                        }
+                    }
+                }
+                if (!entries.isEmpty()) lineupEntryDao.insertAll(entries);
+                for (com.example.housemanager.database.entities.LineupEntryEntity le : entries) {
+                    ensurePlayerExistsIfMissing(le.getPlayerId(), null, le.getTeamId(), le.getTeamId() == (int) m.getHomeTeamId() ? m.getHomeTeamName() : m.getAwayTeamName(), "Unknown");
+                }
+                // Eventos
+                matchEventDao.clearByMatch(matchId);
+                java.util.List<com.example.housemanager.database.entities.MatchEventEntity> evs = new java.util.ArrayList<>();
+                if (d.getGoals() != null) {
+                    for (com.example.housemanager.api.models.GoalAPI g : d.getGoals()) {
+                        if (g == null || g.getScorer() == null) continue;
+                        int pid = g.getScorer().getId();
+                        String pname = g.getScorer().getName();
+                        ensurePlayerExistsIfMissing(pid, pname, 0, "", null);
+                        String type = g.getType() != null ? g.getType().toUpperCase() : "REGULAR";
+                        String mapped = type.equals("PENALTY") ? "GOAL_PENALTY" : (type.equals("OWN") ? "GOAL_OWN" : "GOAL_REGULAR");
+                        com.example.housemanager.database.entities.MatchEventEntity me = new com.example.housemanager.database.entities.MatchEventEntity();
+                        me.setMatchId(matchId);
+                        me.setPlayerId(pid);
+                        me.setType(mapped);
+                        me.setMinute(null);
+                        evs.add(me);
+                        if (g.getAssist() != null) {
+                            int aid = g.getAssist().getId();
+                            String aname = g.getAssist().getName();
+                            ensurePlayerExistsIfMissing(aid, aname, 0, "", null);
+                            com.example.housemanager.database.entities.MatchEventEntity as = new com.example.housemanager.database.entities.MatchEventEntity();
+                            as.setMatchId(matchId);
+                            as.setPlayerId(aid);
+                            as.setType("ASSIST");
+                            as.setMinute(null);
+                            evs.add(as);
+                        }
+                    }
+                }
+                if (d.getBookings() != null) {
+                    for (com.example.housemanager.api.models.BookingAPI b : d.getBookings()) {
+                        if (b == null || b.getPlayer() == null) continue;
+                        int pid = b.getPlayer().getId();
+                        String pname = b.getPlayer().getName();
+                        ensurePlayerExistsIfMissing(pid, pname, 0, "", null);
+                        String card = b.getCard() != null ? b.getCard().toUpperCase() : "YELLOW";
+                        String mapped = card.equals("RED") ? "CARD_RED" : (card.equals("YELLOW_RED") ? "CARD_SECOND_YELLOW" : "CARD_YELLOW");
+                        com.example.housemanager.database.entities.MatchEventEntity ce = new com.example.housemanager.database.entities.MatchEventEntity();
+                        ce.setMatchId(matchId);
+                        ce.setPlayerId(pid);
+                        ce.setType(mapped);
+                        ce.setMinute(null);
+                        evs.add(ce);
+                    }
+                }
+                if ((d.getGoals() == null || d.getGoals().isEmpty()) && (d.getBookings() == null || d.getBookings().isEmpty()) && d.getEvents() != null) {
+                    for (com.example.housemanager.api.models.MatchEventAPI ev : d.getEvents()) {
+                        if (ev == null || ev.getPlayer() == null) continue;
+                        String t = ev.getType() != null ? ev.getType().toUpperCase() : "";
+                        String mapped;
+                        if (t.contains("GOAL")) mapped = "GOAL_REGULAR";
+                        else if (t.contains("YELLOW")) mapped = t.contains("SECOND") ? "CARD_SECOND_YELLOW" : "CARD_YELLOW";
+                        else if (t.contains("RED")) mapped = "CARD_RED";
+                        else continue;
+                        com.example.housemanager.database.entities.MatchEventEntity me = new com.example.housemanager.database.entities.MatchEventEntity();
+                        me.setMatchId(matchId);
+                        me.setPlayerId(ev.getPlayer().getId());
+                        me.setType(mapped);
+                        me.setMinute(null);
+                        evs.add(me);
+                    }
+                }
+                if (!evs.isEmpty()) matchEventDao.insertAll(evs);
+                // Recalcular este partido
+                recomputePointsForMatchInternal(m);
+            } catch (Exception ignored) { }
+        });
+    }
+
     public void syncUpcomingMatches(@Nullable SyncCallback callback) {
         // Construir rango [hoy .. hoy+7] en ISO yyyy-MM-dd
         Log.d(TAG, "Descargando próximos partidos...");
@@ -598,32 +796,21 @@ public class FootballRepository {
 
     /** Jugadores propiedad del usuario en una liga, en formato PlayerAPI para UI de Mi Equipo. */
     public LiveData<List<PlayerAPI>> getMyTeamApiPlayers(long leagueId, long ownerUserId) {
-        androidx.lifecycle.MediatorLiveData<List<PlayerAPI>> out = new androidx.lifecycle.MediatorLiveData<>();
-        LiveData<java.util.List<Long>> ownedIdsLive = ownershipDao.getOwnedPlayerIdsLive(leagueId, ownerUserId);
-        out.addSource(ownedIdsLive, ids -> {
-            executor.execute(() -> {
-                List<PlayerAPI> result = new ArrayList<>();
-                try {
-                    if (ids != null && !ids.isEmpty()) {
-                        // Convert List<Long> to List<Integer> for DAO
-                        List<Integer> intIds = new ArrayList<>();
-                        for (Long l : ids) intIds.add(l.intValue());
-                        List<PlayerEntity> entities = playerDao.getByIdsSync(intIds);
-                        for (PlayerEntity e : entities) {
-                            PlayerAPI dto = new PlayerAPI();
-                            dto.setId(e.getPlayerId());
-                            dto.setName(e.getName());
-                            dto.setPosition(e.getPosition());
-                            dto.setNationality(e.getNationality());
-                            dto.setPoints(e.getTotalPoints());
-                            result.add(dto);
-                        }
-                    }
-                } catch (Exception ignored) { }
-                out.postValue(result);
-            });
+        LiveData<List<PlayerEntity>> squadLive = ownershipDao.getMySquad(leagueId, ownerUserId);
+        return Transformations.map(squadLive, list -> {
+            List<PlayerAPI> out = new ArrayList<>();
+            if (list == null) return out;
+            for (PlayerEntity e : list) {
+                PlayerAPI dto = new PlayerAPI();
+                dto.setId(e.getPlayerId());
+                dto.setName(e.getName());
+                dto.setPosition(e.getPosition());
+                dto.setNationality(e.getNationality());
+                dto.setPoints(e.getTotalPoints());
+                out.add(dto);
+            }
+            return out;
         });
-        return out;
     }
 
     /** Búsqueda simple para el mercado. */
@@ -1091,6 +1278,214 @@ public class FootballRepository {
         recomputePointsForAllFinishedMatches(null);
     }
 
+    /**
+     * Recalcula PlayerMatchPoints para TODAS las jornadas finalizadas (solo con datos verificables) e
+     * idempotentemente actualiza players.totalPoints = SUM(points).
+     */
+    public void recalcAllFinishedPoints(@Nullable SyncCallback callback) {
+        executor.execute(() -> {
+            try {
+                // 1) Limpiar tabla para hacerlo idempotente
+                try { playerMatchPointsDao.clearAll(); } catch (Exception ignored) { }
+
+                // 2) Recorrer partidos FINISHED y construir registros por jugador
+                List<MatchEntity> matches = matchDao.getAllSync();
+                java.util.Set<Integer> touchedPlayers = new java.util.HashSet<>();
+                if (matches != null) {
+                    for (MatchEntity match : matches) {
+                        if (match == null) continue;
+                        String st = match.getStatus();
+                        if (st == null || !"FINISHED".equalsIgnoreCase(st)) continue;
+
+                        long matchId = match.getMatchId();
+                        List<com.example.housemanager.database.entities.LineupEntryEntity> lineup = lineupEntryDao.getByMatch(matchId);
+                        List<com.example.housemanager.database.entities.MatchEventEntity> events = matchEventDao.getByMatch(matchId);
+                        boolean hasDetails = lineup != null && !lineup.isEmpty() && events != null && !events.isEmpty();
+                        if (!hasDetails) {
+                            // Fallback por equipo si no hay eventos y/o no hay alineación: aplicar 3/1/0
+                            Integer hs = match.getHomeScore();
+                            Integer as = match.getAwayScore();
+                            if (hs != null && as != null) {
+                                int homePts = (hs > as) ? 3 : (hs.equals(as) ? 1 : 0);
+                                int awayPts = (as > hs) ? 3 : (hs.equals(as) ? 1 : 0);
+                                List<com.example.housemanager.database.entities.PlayerMatchPoints> batch = new java.util.ArrayList<>();
+                                Integer mdVal = null;
+                                try { mdVal = (Integer) match.getClass().getMethod("getMatchday").invoke(match); } catch (Exception ignored) {}
+                                int md = mdVal != null ? mdVal : 0;
+
+                                if (lineup != null && !lineup.isEmpty()) {
+                                    // Con alineación: asignar +resultado y +2 a titulares
+                                    for (com.example.housemanager.database.entities.LineupEntryEntity le : lineup) {
+                                        if (le == null) continue;
+                                        int pid = le.getPlayerId();
+                                        int base = (le.getTeamId() == (int) match.getHomeTeamId()) ? homePts : awayPts;
+                                        int effPoints = base + ("STARTER".equalsIgnoreCase(le.getRole()) ? 2 : 0);
+
+                                        List<com.example.housemanager.database.entities.LeaguePlayerOwnership> owns = ownershipDao.getOwnershipsForPlayerSync(pid);
+                                        if (owns == null || owns.isEmpty()) {
+                                            com.example.housemanager.database.entities.PlayerMatchPoints rec = new com.example.housemanager.database.entities.PlayerMatchPoints();
+                                            rec.setMatchId(matchId);
+                                            rec.setPlayerId(pid);
+                                            rec.setMatchday(md);
+                                            rec.setPoints(effPoints);
+                                            batch.add(rec);
+                                        } else {
+                                            for (com.example.housemanager.database.entities.LeaguePlayerOwnership own : owns) {
+                                                int eff = effPoints;
+                                                try {
+                                                    com.example.housemanager.database.entities.Captain cap = captainDao.getCaptainSync(own.getLeagueId(), own.getOwnerUserId());
+                                                    if (cap != null && cap.getCaptainPlayerId() == pid) eff *= 2;
+                                                } catch (Exception ignoredCap) { }
+                                                com.example.housemanager.database.entities.PlayerMatchPoints rec = new com.example.housemanager.database.entities.PlayerMatchPoints();
+                                                rec.setMatchId(matchId);
+                                                rec.setPlayerId(pid);
+                                                rec.setMatchday(md);
+                                                rec.setPoints(eff);
+                                                batch.add(rec);
+                                            }
+                                        }
+                                        touchedPlayers.add(pid);
+                                    }
+                                } else {
+                                    // Sin alineación: asignar solo +resultado a toda la plantilla registrada de cada equipo
+                                    java.util.List<PlayerEntity> homePlayers = playerDao.getByTeamSync((int) match.getHomeTeamId());
+                                    java.util.List<PlayerEntity> awayPlayers = playerDao.getByTeamSync((int) match.getAwayTeamId());
+                                    if (homePlayers != null) {
+                                        for (PlayerEntity pe : homePlayers) {
+                                            int pid = pe.getPlayerId();
+                                            List<com.example.housemanager.database.entities.LeaguePlayerOwnership> owns = ownershipDao.getOwnershipsForPlayerSync(pid);
+                                            if (owns == null || owns.isEmpty()) {
+                                                com.example.housemanager.database.entities.PlayerMatchPoints rec = new com.example.housemanager.database.entities.PlayerMatchPoints();
+                                                rec.setMatchId(matchId);
+                                                rec.setPlayerId(pid);
+                                                rec.setMatchday(md);
+                                                rec.setPoints(homePts);
+                                                batch.add(rec);
+                                            } else {
+                                                for (com.example.housemanager.database.entities.LeaguePlayerOwnership own : owns) {
+                                                    int eff = homePts;
+                                                    try {
+                                                        com.example.housemanager.database.entities.Captain cap = captainDao.getCaptainSync(own.getLeagueId(), own.getOwnerUserId());
+                                                        if (cap != null && cap.getCaptainPlayerId() == pid) eff *= 2;
+                                                    } catch (Exception ignoredCap) { }
+                                                    com.example.housemanager.database.entities.PlayerMatchPoints rec = new com.example.housemanager.database.entities.PlayerMatchPoints();
+                                                    rec.setMatchId(matchId);
+                                                    rec.setPlayerId(pid);
+                                                    rec.setMatchday(md);
+                                                    rec.setPoints(eff);
+                                                    batch.add(rec);
+                                                }
+                                            }
+                                            touchedPlayers.add(pid);
+                                        }
+                                    }
+                                    if (awayPlayers != null) {
+                                        for (PlayerEntity pe : awayPlayers) {
+                                            int pid = pe.getPlayerId();
+                                            List<com.example.housemanager.database.entities.LeaguePlayerOwnership> owns = ownershipDao.getOwnershipsForPlayerSync(pid);
+                                            if (owns == null || owns.isEmpty()) {
+                                                com.example.housemanager.database.entities.PlayerMatchPoints rec = new com.example.housemanager.database.entities.PlayerMatchPoints();
+                                                rec.setMatchId(matchId);
+                                                rec.setPlayerId(pid);
+                                                rec.setMatchday(md);
+                                                rec.setPoints(awayPts);
+                                                batch.add(rec);
+                                            } else {
+                                                for (com.example.housemanager.database.entities.LeaguePlayerOwnership own : owns) {
+                                                    int eff = awayPts;
+                                                    try {
+                                                        com.example.housemanager.database.entities.Captain cap = captainDao.getCaptainSync(own.getLeagueId(), own.getOwnerUserId());
+                                                        if (cap != null && cap.getCaptainPlayerId() == pid) eff *= 2;
+                                                    } catch (Exception ignoredCap) { }
+                                                    com.example.housemanager.database.entities.PlayerMatchPoints rec = new com.example.housemanager.database.entities.PlayerMatchPoints();
+                                                    rec.setMatchId(matchId);
+                                                    rec.setPlayerId(pid);
+                                                    rec.setMatchday(md);
+                                                    rec.setPoints(eff);
+                                                    batch.add(rec);
+                                                }
+                                            }
+                                            touchedPlayers.add(pid);
+                                        }
+                                    }
+                                }
+
+                                if (!batch.isEmpty()) playerMatchPointsDao.insertAll(batch);
+                            }
+                            continue; // pasar al siguiente partido
+                        }
+
+                        java.util.Set<Integer> playerIds = new java.util.HashSet<>();
+                        for (com.example.housemanager.database.entities.LineupEntryEntity le : lineup) { if (le != null) playerIds.add(le.getPlayerId()); }
+                        for (com.example.housemanager.database.entities.MatchEventEntity ev : events) { if (ev != null) playerIds.add(ev.getPlayerId()); }
+                        if (playerIds.isEmpty()) continue;
+
+                        java.util.List<Integer> idsList = new java.util.ArrayList<>(playerIds);
+                        List<PlayerEntity> pel = playerDao.getByIdsSync(idsList);
+                        java.util.Map<Integer, PlayerEntity> byId = new java.util.HashMap<>();
+                        if (pel != null) for (PlayerEntity e : pel) byId.put(e.getPlayerId(), e);
+
+                        List<com.example.housemanager.database.entities.PlayerMatchPoints> batch = new java.util.ArrayList<>();
+                        Integer mdVal = null;
+                        try { mdVal = (Integer) match.getClass().getMethod("getMatchday").invoke(match); } catch (Exception ignored) {}
+                        int md = mdVal != null ? mdVal : 0;
+                        for (Integer pid : playerIds) {
+                            PlayerEntity pe = byId.get(pid);
+                            if (pe == null) continue;
+                            int pts = pointsCalculator.computeForPlayerInMatch(
+                                    pid,
+                                    pe.getPosition(),
+                                    pe.getTeamId(),
+                                    match,
+                                    events,
+                                    lineup
+                            );
+                            // Por cada liga donde el jugador pertenece a un usuario, crear fila (capitán x2 si aplica)
+                            List<com.example.housemanager.database.entities.LeaguePlayerOwnership> owns = ownershipDao.getOwnershipsForPlayerSync(pid);
+                            if (owns == null || owns.isEmpty()) {
+                                // Sin liga: guardar fila "global" sin liga no es parte del esquema; mantenemos puntos solo para totales desde esta tabla
+                                com.example.housemanager.database.entities.PlayerMatchPoints rec = new com.example.housemanager.database.entities.PlayerMatchPoints();
+                                rec.setMatchId(matchId);
+                                rec.setPlayerId(pid);
+                                rec.setMatchday(md);
+                                rec.setPoints(pts);
+                                batch.add(rec);
+                            } else {
+                                for (com.example.housemanager.database.entities.LeaguePlayerOwnership own : owns) {
+                                    int effPts = pts;
+                                    try {
+                                        com.example.housemanager.database.entities.Captain cap = captainDao.getCaptainSync(own.getLeagueId(), own.getOwnerUserId());
+                                        if (cap != null && cap.getCaptainPlayerId() == pid) {
+                                            effPts *= 2;
+                                        }
+                                    } catch (Exception ignoredCap) { }
+                                    com.example.housemanager.database.entities.PlayerMatchPoints rec = new com.example.housemanager.database.entities.PlayerMatchPoints();
+                                    rec.setMatchId(matchId);
+                                    rec.setPlayerId(pid);
+                                    rec.setMatchday(md);
+                                    rec.setPoints(effPts);
+                                    batch.add(rec);
+                                }
+                            }
+                            touchedPlayers.add(pid);
+                        }
+                        if (!batch.isEmpty()) playerMatchPointsDao.insertAll(batch);
+                    }
+                }
+
+                // 3) Actualizar totalPoints en players desde PlayerMatchPoints acumulado
+                for (Integer pid : touchedPlayers) {
+                    Integer total = playerMatchPointsDao.getSeasonPointsForPlayer(pid);
+                    playerDao.updateTotalPoints(pid, total != null ? total : 0);
+                }
+
+                if (callback != null) runOnMainThread(callback::onSuccess);
+            } catch (Exception e) {
+                if (callback != null) runOnMainThread(() -> callback.onError(e));
+            }
+        });
+    }
+
     private void recomputePointsForMatchInternal(MatchEntity match) {
         try {
             // Solo calcular si el partido está FINISHED
@@ -1102,17 +1497,73 @@ public class FootballRepository {
             List<com.example.housemanager.database.entities.LineupEntryEntity> lineup = lineupEntryDao.getByMatch(matchId);
             List<com.example.housemanager.database.entities.MatchEventEntity> events = matchEventDao.getByMatch(matchId);
 
-            // Construir conjunto de jugadores implicados (alineación o eventos)
-            java.util.Set<Integer> playerIds = new java.util.HashSet<>();
-            if (lineup != null) {
-                for (com.example.housemanager.database.entities.LineupEntryEntity le : lineup) {
-                    if (le != null) playerIds.add(le.getPlayerId());
+            // Si faltan eventos o alineaciones, aplicar fallback basado en marcador
+            boolean hasLineup = (lineup != null && !lineup.isEmpty());
+            boolean hasEvents = (events != null && !events.isEmpty());
+            if (!hasLineup || !hasEvents) {
+                // Limpiar historial previo del partido e insertar filas de fallback
+                playerPointsHistoryDao.clearByMatch(matchId);
+                Integer hs = match.getHomeScore();
+                Integer as = match.getAwayScore();
+                if (hs != null && as != null) {
+                    int homePts = (hs > as) ? 3 : (hs.equals(as) ? 1 : 0);
+                    int awayPts = (as > hs) ? 3 : (hs.equals(as) ? 1 : 0);
+
+                    if (hasLineup) {
+                        // Con alineación: asignar +resultado y +2 a titulares
+                        for (com.example.housemanager.database.entities.LineupEntryEntity le : lineup) {
+                            if (le == null) continue;
+                            int teamPts = (le.getTeamId() == (int) match.getHomeTeamId()) ? homePts : awayPts;
+                            int pts = teamPts;
+                            if ("STARTER".equalsIgnoreCase(le.getRole())) {
+                                pts += 2;
+                            }
+                            com.example.housemanager.database.entities.PlayerPointsHistoryEntity rec = new com.example.housemanager.database.entities.PlayerPointsHistoryEntity();
+                            rec.setMatchId(matchId);
+                            rec.setPlayerId(le.getPlayerId());
+                            rec.setPoints(pts);
+                            playerPointsHistoryDao.insert(rec);
+                            Integer total = playerPointsHistoryDao.getTotalForPlayer(le.getPlayerId());
+                            playerDao.updateTotalPoints(le.getPlayerId(), total != null ? total : 0);
+                        }
+                    } else {
+                        // Sin alineación: asignar solo +resultado a toda la plantilla registrada de cada equipo
+                        java.util.List<PlayerEntity> homePlayers = playerDao.getByTeamSync((int) match.getHomeTeamId());
+                        java.util.List<PlayerEntity> awayPlayers = playerDao.getByTeamSync((int) match.getAwayTeamId());
+                        if (homePlayers != null) {
+                            for (PlayerEntity pe : homePlayers) {
+                                com.example.housemanager.database.entities.PlayerPointsHistoryEntity rec = new com.example.housemanager.database.entities.PlayerPointsHistoryEntity();
+                                rec.setMatchId(matchId);
+                                rec.setPlayerId(pe.getPlayerId());
+                                rec.setPoints(homePts);
+                                playerPointsHistoryDao.insert(rec);
+                                Integer total = playerPointsHistoryDao.getTotalForPlayer(pe.getPlayerId());
+                                playerDao.updateTotalPoints(pe.getPlayerId(), total != null ? total : 0);
+                            }
+                        }
+                        if (awayPlayers != null) {
+                            for (PlayerEntity pe : awayPlayers) {
+                                com.example.housemanager.database.entities.PlayerPointsHistoryEntity rec = new com.example.housemanager.database.entities.PlayerPointsHistoryEntity();
+                                rec.setMatchId(matchId);
+                                rec.setPlayerId(pe.getPlayerId());
+                                rec.setPoints(awayPts);
+                                playerPointsHistoryDao.insert(rec);
+                                Integer total = playerPointsHistoryDao.getTotalForPlayer(pe.getPlayerId());
+                                playerDao.updateTotalPoints(pe.getPlayerId(), total != null ? total : 0);
+                            }
+                        }
+                    }
                 }
+                return;
             }
-            if (events != null) {
-                for (com.example.housemanager.database.entities.MatchEventEntity ev : events) {
-                    if (ev != null) playerIds.add(ev.getPlayerId());
-                }
+
+            // Construir conjunto de jugadores implicados (alineación y eventos)
+            java.util.Set<Integer> playerIds = new java.util.HashSet<>();
+            for (com.example.housemanager.database.entities.LineupEntryEntity le : lineup) {
+                if (le != null) playerIds.add(le.getPlayerId());
+            }
+            for (com.example.housemanager.database.entities.MatchEventEntity ev : events) {
+                if (ev != null) playerIds.add(ev.getPlayerId());
             }
 
             if (playerIds.isEmpty()) {
@@ -1160,127 +1611,199 @@ public class FootballRepository {
 
     /** Sincroniza jornada actual, guarda partidos + alineaciones + eventos y recalcula puntos acumulados. */
     public void syncAndRecalculatePointsForCurrentMatchday(@Nullable SyncCallback callback) {
+        // Mantener método existente por compatibilidad, delegando al nuevo que cubre todas las jornadas
+        syncAndRecalculatePointsForAllMatchdaysUpToCurrent(callback);
+    }
+
+    /**
+     * Sincroniza TODAS las jornadas hasta la jornada actual, guarda partidos + alineaciones + eventos,
+     * y recalcula los puntos acumulados (sumatorio histórico).
+     */
+    public void syncAndRecalculatePointsForAllMatchdaysUpToCurrent(@Nullable SyncCallback callback) {
         executor.execute(() -> {
             try {
                 // 1) Obtener jornada actual
-                int md;
+                int currentMd;
                 try {
                     retrofit2.Response<com.example.housemanager.api.models.CompetitionDetails> compResp = apiService.getCompetitionDetails().execute();
                     Integer curr = (compResp.isSuccessful() && compResp.body() != null && compResp.body().getCurrentSeason() != null)
                             ? compResp.body().getCurrentSeason().getCurrentMatchday()
                             : null;
-                    md = (curr != null) ? curr : 1;
+                    currentMd = (curr != null) ? curr : 1;
                 } catch (Exception e) {
-                    md = 1; // fallback
+                    currentMd = 1; // fallback
                 }
 
-                // 2) Descargar partidos por jornada y persistir
-                retrofit2.Response<MatchesResponse> matchesResp = apiService.getMatchesByMatchday(md).execute();
-                if (!matchesResp.isSuccessful() || matchesResp.body() == null) {
-                    throw new IllegalStateException("No se pudieron obtener los partidos de la jornada " + md);
-                }
-                List<MatchAPI> apiMatches = matchesResp.body().getMatches();
-                List<MatchEntity> entities = convertApiMatchesToEntities(apiMatches);
-                matchDao.deleteAll();
-                if (!entities.isEmpty()) matchDao.insertAll(entities);
-
-                // 3) Para cada partido, descargar detalle (si disponible), persistir lineups y eventos
-                for (MatchEntity m : entities) {
+                // 2) Recorrer desde la jornada 1 hasta la actual
+                for (int md = 1; md <= currentMd; md++) {
                     try {
-                        retrofit2.Response<com.example.housemanager.api.models.MatchDetailResponse> detResp = apiService.getMatchDetail(m.getMatchId()).execute();
-                        if (detResp.isSuccessful() && detResp.body() != null) {
-                            com.example.housemanager.api.models.MatchDetailResponse d = detResp.body();
-                            // Persistir lineups
-                            lineupEntryDao.clearByMatch(m.getMatchId());
-                            java.util.List<com.example.housemanager.database.entities.LineupEntryEntity> entries = new java.util.ArrayList<>();
-                            java.util.List<Integer> idsToResolve = new java.util.ArrayList<>();
-                            if (d.getHomeTeamLineup() != null) {
-                                for (com.example.housemanager.api.models.LineupEntryAPI le : d.getHomeTeamLineup().getStartXI()) {
-                                    if (le != null && le.getPlayer() != null) {
-                                        com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
-                                        e.setMatchId(m.getMatchId());
-                                        e.setPlayerId(le.getPlayer().getId());
-                                        e.setTeamId((int) m.getHomeTeamId());
-                                        e.setRole("STARTER");
-                                        entries.add(e);
-                                        idsToResolve.add(le.getPlayer().getId());
-                                    }
-                                }
-                                for (com.example.housemanager.api.models.LineupEntryAPI le : d.getHomeTeamLineup().getSubstitutes()) {
-                                    if (le != null && le.getPlayer() != null) {
-                                        com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
-                                        e.setMatchId(m.getMatchId());
-                                        e.setPlayerId(le.getPlayer().getId());
-                                        e.setTeamId((int) m.getHomeTeamId());
-                                        e.setRole("SUB");
-                                        entries.add(e);
-                                        idsToResolve.add(le.getPlayer().getId());
-                                    }
-                                }
-                            }
-                            if (d.getAwayTeamLineup() != null) {
-                                for (com.example.housemanager.api.models.LineupEntryAPI le : d.getAwayTeamLineup().getStartXI()) {
-                                    if (le != null && le.getPlayer() != null) {
-                                        com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
-                                        e.setMatchId(m.getMatchId());
-                                        e.setPlayerId(le.getPlayer().getId());
-                                        e.setTeamId((int) m.getAwayTeamId());
-                                        e.setRole("STARTER");
-                                        entries.add(e);
-                                        idsToResolve.add(le.getPlayer().getId());
-                                    }
-                                }
-                                for (com.example.housemanager.api.models.LineupEntryAPI le : d.getAwayTeamLineup().getSubstitutes()) {
-                                    if (le != null && le.getPlayer() != null) {
-                                        com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
-                                        e.setMatchId(m.getMatchId());
-                                        e.setPlayerId(le.getPlayer().getId());
-                                        e.setTeamId((int) m.getAwayTeamId());
-                                        e.setRole("SUB");
-                                        entries.add(e);
-                                        idsToResolve.add(le.getPlayer().getId());
-                                    }
-                                }
-                            }
-                            if (!entries.isEmpty()) {
-                                lineupEntryDao.insertAll(entries);
-                            }
-
-                            // Persistir eventos
-                            matchEventDao.clearByMatch(m.getMatchId());
-                            java.util.List<com.example.housemanager.database.entities.MatchEventEntity> evs = new java.util.ArrayList<>();
-                            if (d.getEvents() != null) {
-                                for (com.example.housemanager.api.models.MatchEventAPI ev : d.getEvents()) {
-                                    if (ev == null || ev.getPlayer() == null) continue;
-                                    String t = ev.getType() != null ? ev.getType().toUpperCase() : "";
-                                    String mapped;
-                                    if (t.contains("GOAL")) mapped = "GOAL";
-                                    else if (t.contains("YELLOW")) mapped = "YELLOW";
-                                    else if (t.contains("RED")) mapped = "RED";
-                                    else continue;
-                                    com.example.housemanager.database.entities.MatchEventEntity me = new com.example.housemanager.database.entities.MatchEventEntity();
-                                    me.setMatchId(m.getMatchId());
-                                    me.setPlayerId(ev.getPlayer().getId());
-                                    // teamId: intentar resolver por PlayerEntity
-                                    java.util.List<Integer> oneId = java.util.Collections.singletonList(ev.getPlayer().getId());
-                                    java.util.List<PlayerEntity> pel = playerDao.getByIdsSync(oneId);
-                                    if (pel != null && !pel.isEmpty()) me.setTeamId(pel.get(0).getTeamId());
-                                    me.setType(mapped);
-                                    me.setMinute(null);
-                                    evs.add(me);
-                                    idsToResolve.add(ev.getPlayer().getId());
-                                }
-                            }
-                            if (!evs.isEmpty()) matchEventDao.insertAll(evs);
-
-                            // 4) Recalcular puntos de este partido (usa lineup/events y actualiza totales)
-                            recomputePointsForMatchInternal(m);
+                        retrofit2.Response<MatchesResponse> matchesResp = apiService.getMatchesByMatchday(md).execute();
+                        if (!matchesResp.isSuccessful() || matchesResp.body() == null) {
+                            continue; // saltar si falla una jornada
                         }
-                    } catch (Exception ignoreOne) {
-                        // Si detalle no está disponible, continuar con el siguiente partido
+                        List<MatchAPI> apiMatches = matchesResp.body().getMatches();
+                        List<MatchEntity> entities = convertApiMatchesToEntities(apiMatches);
+                        // IMPORTANTE: no borrar toda la tabla. Insertar/actualizar en REPLACE.
+                        if (!entities.isEmpty()) matchDao.insertAll(entities);
+
+                        // Para cada partido, descargar detalle (si disponible), persistir y recalcular
+                        for (MatchEntity m : entities) {
+                            try {
+                                retrofit2.Response<com.example.housemanager.api.models.MatchDetailResponse> detResp = apiService.getMatchDetail(m.getMatchId()).execute();
+                                if (detResp.isSuccessful() && detResp.body() != null) {
+                                    com.example.housemanager.api.models.MatchDetailResponse d = detResp.body();
+                                    // Persistir alineaciones
+                                    lineupEntryDao.clearByMatch(m.getMatchId());
+                                    java.util.List<com.example.housemanager.database.entities.LineupEntryEntity> entries = new java.util.ArrayList<>();
+                                    if (d.getHomeTeamLineup() != null) {
+                                        for (com.example.housemanager.api.models.LineupEntryAPI le : d.getHomeTeamLineup().getStartXI()) {
+                                            if (le != null && le.getPlayer() != null) {
+                                                com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
+                                                e.setMatchId(m.getMatchId());
+                                                e.setPlayerId(le.getPlayer().getId());
+                                                e.setTeamId((int) m.getHomeTeamId());
+                                                e.setRole("STARTER");
+                                                entries.add(e);
+                                            }
+                                        }
+                                        for (com.example.housemanager.api.models.LineupEntryAPI le : d.getHomeTeamLineup().getSubstitutes()) {
+                                            if (le != null && le.getPlayer() != null) {
+                                                com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
+                                                e.setMatchId(m.getMatchId());
+                                                e.setPlayerId(le.getPlayer().getId());
+                                                e.setTeamId((int) m.getHomeTeamId());
+                                                e.setRole("SUB");
+                                                entries.add(e);
+                                            }
+                                        }
+                                    }
+                                    if (d.getAwayTeamLineup() != null) {
+                                        for (com.example.housemanager.api.models.LineupEntryAPI le : d.getAwayTeamLineup().getStartXI()) {
+                                            if (le != null && le.getPlayer() != null) {
+                                                com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
+                                                e.setMatchId(m.getMatchId());
+                                                e.setPlayerId(le.getPlayer().getId());
+                                                e.setTeamId((int) m.getAwayTeamId());
+                                                e.setRole("STARTER");
+                                                entries.add(e);
+                                            }
+                                        }
+                                        for (com.example.housemanager.api.models.LineupEntryAPI le : d.getAwayTeamLineup().getSubstitutes()) {
+                                            if (le != null && le.getPlayer() != null) {
+                                                com.example.housemanager.database.entities.LineupEntryEntity e = new com.example.housemanager.database.entities.LineupEntryEntity();
+                                                e.setMatchId(m.getMatchId());
+                                                e.setPlayerId(le.getPlayer().getId());
+                                                e.setTeamId((int) m.getAwayTeamId());
+                                                e.setRole("SUB");
+                                                entries.add(e);
+                                            }
+                                        }
+                                    }
+                                    if (!entries.isEmpty()) {
+                                        lineupEntryDao.insertAll(entries);
+                                    }
+
+                                    // Upsert mínimo de jugadores que aparecen en alineaciones
+                                    try {
+                                        for (com.example.housemanager.database.entities.LineupEntryEntity le : entries) {
+                                            ensurePlayerExistsIfMissing(le.getPlayerId(), null,
+                                                    le.getTeamId(), le.getTeamId() == (int) m.getHomeTeamId() ? m.getHomeTeamName() : m.getAwayTeamName(),
+                                                    "Unknown");
+                                        }
+                                    } catch (Exception ignoredUpsert) {}
+
+                                    // Persistir eventos (goals/bookings preferidos; fallback a events[])
+                                    matchEventDao.clearByMatch(m.getMatchId());
+                                    java.util.List<com.example.housemanager.database.entities.MatchEventEntity> evs = new java.util.ArrayList<>();
+
+                                    // Goals
+                                    if (d.getGoals() != null) {
+                                        for (com.example.housemanager.api.models.GoalAPI g : d.getGoals()) {
+                                            if (g == null || g.getScorer() == null) continue;
+                                            int pid = g.getScorer().getId();
+                                            String pname = g.getScorer().getName();
+                                            ensurePlayerExistsIfMissing(pid, pname, 0, "", null);
+                                            String type = g.getType() != null ? g.getType().toUpperCase() : "REGULAR";
+                                            String mapped = type.equals("PENALTY") ? "GOAL_PENALTY" : (type.equals("OWN") ? "GOAL_OWN" : "GOAL_REGULAR");
+
+                                            com.example.housemanager.database.entities.MatchEventEntity me = new com.example.housemanager.database.entities.MatchEventEntity();
+                                            me.setMatchId(m.getMatchId());
+                                            me.setPlayerId(pid);
+                                            me.setType(mapped);
+                                            me.setMinute(null);
+                                            // teamId se resolverá luego por lineup para cálculo
+                                            evs.add(me);
+
+                                            if (g.getAssist() != null) {
+                                                int aid = g.getAssist().getId();
+                                                String aname = g.getAssist().getName();
+                                                ensurePlayerExistsIfMissing(aid, aname, 0, "", null);
+                                                com.example.housemanager.database.entities.MatchEventEntity as = new com.example.housemanager.database.entities.MatchEventEntity();
+                                                as.setMatchId(m.getMatchId());
+                                                as.setPlayerId(aid);
+                                                as.setType("ASSIST");
+                                                as.setMinute(null);
+                                                evs.add(as);
+                                            }
+                                        }
+                                    }
+
+                                    // Bookings
+                                    if (d.getBookings() != null) {
+                                        for (com.example.housemanager.api.models.BookingAPI b : d.getBookings()) {
+                                            if (b == null || b.getPlayer() == null) continue;
+                                            int pid = b.getPlayer().getId();
+                                            String pname = b.getPlayer().getName();
+                                            ensurePlayerExistsIfMissing(pid, pname, 0, "", null);
+                                            String card = b.getCard() != null ? b.getCard().toUpperCase() : "YELLOW";
+                                            String mapped = card.equals("RED") ? "CARD_RED" : (card.equals("YELLOW_RED") ? "CARD_SECOND_YELLOW" : "CARD_YELLOW");
+                                            com.example.housemanager.database.entities.MatchEventEntity ce = new com.example.housemanager.database.entities.MatchEventEntity();
+                                            ce.setMatchId(m.getMatchId());
+                                            ce.setPlayerId(pid);
+                                            ce.setType(mapped);
+                                            ce.setMinute(null);
+                                            evs.add(ce);
+                                        }
+                                    }
+
+                                    // Fallback genérico si no tenemos arrays específicos
+                                    if ((d.getGoals() == null || d.getGoals().isEmpty()) && (d.getBookings() == null || d.getBookings().isEmpty()) && d.getEvents() != null) {
+                                        for (com.example.housemanager.api.models.MatchEventAPI ev : d.getEvents()) {
+                                            if (ev == null || ev.getPlayer() == null) continue;
+                                            String t = ev.getType() != null ? ev.getType().toUpperCase() : "";
+                                            String mapped;
+                                            if (t.contains("GOAL")) mapped = "GOAL_REGULAR";
+                                            else if (t.contains("YELLOW")) mapped = t.contains("SECOND") ? "CARD_SECOND_YELLOW" : "CARD_YELLOW";
+                                            else if (t.contains("RED")) mapped = "CARD_RED";
+                                            else continue;
+                                            com.example.housemanager.database.entities.MatchEventEntity me = new com.example.housemanager.database.entities.MatchEventEntity();
+                                            me.setMatchId(m.getMatchId());
+                                            me.setPlayerId(ev.getPlayer().getId());
+                                            me.setType(mapped);
+                                            me.setMinute(null);
+                                            evs.add(me);
+                                        }
+                                    }
+
+                                    if (!evs.isEmpty()) matchEventDao.insertAll(evs);
+
+                                    // Recalcular puntos de este partido
+                                    recomputePointsForMatchInternal(m);
+                                }
+                            } catch (Exception ignoreOne) {
+                                // continuar con el siguiente partido
+                            }
+
+                            // Respetar un pequeño retraso para no saturar la API en planes con límite
+                            try { Thread.sleep(250L); } catch (InterruptedException ignored) { }
+                        }
+                    } catch (Exception ignoreMd) {
+                        // continuar con la siguiente jornada si falla una
                     }
                 }
 
+                // Al terminar la sincronización de todas las jornadas, recalcular puntos acumulados de toda la temporada
+                recalcAllFinishedPoints(null);
                 if (callback != null) runOnMainThread(callback::onSuccess);
             } catch (Exception e) {
                 if (callback != null) runOnMainThread(() -> callback.onError(e));
@@ -1297,9 +1820,91 @@ public class FootballRepository {
     }
 
     /** Ejecuta en hilo principal. */
+    public void deleteLeagueCompletely(long leagueId) {
+        executor.execute(() -> {
+            try {
+                db.runInTransaction(() -> {
+                    try { marketDao.clearLeagueMarket(leagueId); } catch (Exception ignored) {}
+                    try { marketStateDao.deleteByLeague(leagueId); } catch (Exception ignored) {}
+                    try { ownershipDao.deleteByLeague(leagueId); } catch (Exception ignored) {}
+                    try { captainDao.deleteCaptainByLeague(leagueId); } catch (Exception ignored) {}
+                    try { leagueDao.deleteLeagueCore(leagueId); } catch (Exception ignored) {}
+                });
+                Log.i("[League]", "deleted leagueId=" + leagueId);
+            } catch (Exception e) {
+                Log.w("[League]", "error deleting leagueId=" + leagueId, e);
+            }
+        });
+    }
+
     private void runOnMainThread(Runnable action) {
         android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
         h.post(action);
+    }
+
+    /** Crea un jugador mínimo si no existe, para no perder eventos/alineaciones por id desconocido. */
+    private void ensurePlayerExistsIfMissing(int playerId, @Nullable String name, int teamId, @Nullable String teamName, @Nullable String position) {
+        try {
+            List<PlayerEntity> existing = playerDao.getByIdsSync(java.util.Collections.singletonList(playerId));
+            if (existing != null && !existing.isEmpty()) return;
+            PlayerEntity e = new PlayerEntity();
+            e.setPlayerId(playerId);
+            e.setName(name != null ? name : ("Jugador " + playerId));
+            e.setTeamId(teamId);
+            e.setTeamName(teamName != null ? teamName : "");
+            e.setPosition(position != null ? position : "Medio");
+            e.setNationality("");
+            e.setCurrentPrice(0);
+            e.setTotalPoints(0);
+            e.setAvailable(true);
+            e.setUpdatedAt(System.currentTimeMillis());
+            playerDao.insertPlayer(e);
+        } catch (Exception ignored) { }
+    }
+
+    /** Auditoría de un partido: registra métricas para depuración de puntos. */
+    public void auditMatchPoints(long matchId) {
+        executor.execute(() -> {
+            try {
+                List<com.example.housemanager.database.entities.LineupEntryEntity> lineup = lineupEntryDao.getByMatch(matchId);
+                List<com.example.housemanager.database.entities.MatchEventEntity> events = matchEventDao.getByMatch(matchId);
+                int starters = 0, bench = 0;
+                if (lineup != null) {
+                    for (com.example.housemanager.database.entities.LineupEntryEntity le : lineup) {
+                        if (le == null || le.getRole() == null) continue;
+                        if ("STARTER".equalsIgnoreCase(le.getRole())) starters++;
+                        else if ("SUB".equalsIgnoreCase(le.getRole())) bench++;
+                    }
+                }
+                int goals = 0, assists = 0, y = 0, yr = 0, r = 0;
+                java.util.Set<Integer> missingIds = new java.util.HashSet<>();
+                if (events != null) {
+                    for (com.example.housemanager.database.entities.MatchEventEntity ev : events) {
+                        if (ev == null) continue;
+                        String t = ev.getType() != null ? ev.getType().toUpperCase() : "";
+                        if (t.startsWith("GOAL_") || t.equals("GOAL")) goals++;
+                        else if (t.equals("ASSIST")) assists++;
+                        else if (t.equals("CARD_YELLOW") || t.equals("YELLOW")) y++;
+                        else if (t.equals("CARD_SECOND_YELLOW") || t.contains("SECOND_YELLOW")) yr++;
+                        else if (t.equals("CARD_RED") || t.equals("RED")) r++;
+                        // verificar existencia del jugador
+                        List<PlayerEntity> p = playerDao.getByIdsSync(java.util.Collections.singletonList(ev.getPlayerId()));
+                        if (p == null || p.isEmpty()) missingIds.add(ev.getPlayerId());
+                    }
+                }
+                List<com.example.housemanager.database.entities.PlayerMatchPoints> rows = playerMatchPointsDao.getByMatchId(matchId);
+                Integer total = playerMatchPointsDao.getTotalPointsForMatch(matchId);
+                Log.d("[Points][Audit]", "match=" + matchId +
+                        " starters=" + starters + " bench=" + bench +
+                        " goals=" + goals + " assists=" + assists +
+                        " y=" + y + " yr=" + yr + " r=" + r +
+                        " rows=" + (rows != null ? rows.size() : 0) +
+                        " total=" + (total != null ? total : 0) +
+                        " missingInPlayers=" + missingIds);
+            } catch (Exception e) {
+                Log.w("[Points][Audit]", "audit error", e);
+            }
+        });
     }
 
     /** Decisión de sincronización. */

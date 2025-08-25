@@ -33,6 +33,27 @@ public final class PointsCalculator {
         }
     }
 
+    /** Determina el teamId del jugador en este partido a partir de la alineación, si es posible. */
+    private int resolveTeamIdFromLineup(int fallbackTeamId, int playerId, @Nullable List<LineupEntryEntity> lineup) {
+        if (lineup != null) {
+            for (LineupEntryEntity le : lineup) {
+                if (le != null && le.getPlayerId() == playerId) {
+                    return le.getTeamId();
+                }
+            }
+        }
+        return fallbackTeamId;
+    }
+
+    /** Cuenta si el jugador tiene algún evento personal en el partido. */
+    private boolean hasAnyPersonalEvent(int playerId, @Nullable List<MatchEventEntity> events) {
+        if (events == null) return false;
+        for (MatchEventEntity e : events) {
+            if (e != null && e.getPlayerId() == playerId) return true;
+        }
+        return false;
+    }
+
     /**
      * Calcula los puntos de un jugador en un partido concreto aplicando las reglas proporcionadas.
      * No asume datos si faltan: suma 0 en esos apartados.
@@ -47,79 +68,89 @@ public final class PointsCalculator {
     ) {
         int pts = 0;
 
-        // 1) Goles (GOAL y PENALTY_GOAL/PENALTY suman; OWN_GOAL no suma)
+        // 0) Determinar teamId real para este partido en base a la alineación
+        int matchTeamId = resolveTeamIdFromLineup(playerTeamId, playerId, lineup);
+
+        // 1) Goles (REGULAR/PENALTY suman; OWN no suma)
         int goals = 0;
+        int assists = 0;
+        int yellows = 0;
+        boolean hasSecondYellow = false;
+        boolean hasDirectRed = false;
         if (events != null) {
             for (MatchEventEntity e : events) {
-                if (e != null && e.getPlayerId() == playerId) {
-                    String type = e.getType();
-                    if (type == null) continue;
-                    String t = type.toUpperCase();
-                    if (t.equals("GOAL") || t.equals("PENALTY_GOAL") || t.equals("PENALTY")) {
+                if (e == null || e.getPlayerId() != playerId) continue;
+                String t = e.getType() != null ? e.getType().toUpperCase() : "";
+                switch (t) {
+                    case "GOAL":
+                    case "GOAL_REGULAR":
+                    case "PENALTY_GOAL":
+                    case "GOAL_PENALTY":
+                    case "PENALTY":
                         goals++;
-                    } else if (t.equals("OWN_GOAL")) {
-                        // no suma puntos por gol en propia puerta
-                    }
+                        break;
+                    case "GOAL_OWN":
+                    case "OWN_GOAL":
+                        // no suma
+                        break;
+                    case "ASSIST":
+                        assists++;
+                        break;
+                    case "CARD_YELLOW":
+                    case "YELLOW":
+                    case "YELLOW_CARD":
+                        yellows++;
+                        break;
+                    case "CARD_SECOND_YELLOW":
+                    case "SECOND_YELLOW_CARD":
+                        hasSecondYellow = true;
+                        break;
+                    case "CARD_RED":
+                    case "RED":
+                    case "RED_CARD":
+                        hasDirectRed = true;
+                        break;
                 }
             }
         }
         pts += goals * pointsForPositionGoal(playerPosition);
+        pts += assists * 3;
 
-        // 2) Titular/Suplente
+        // 2) Titular/Suplente: SUB solo si jugó (proxy: tuvo evento)
         boolean isStarter = false;
         boolean isSub = false;
         if (lineup != null) {
             for (LineupEntryEntity le : lineup) {
                 if (le != null && le.getPlayerId() == playerId) {
                     String role = le.getRole();
-                    if (role != null) {
-                        if (role.equalsIgnoreCase("STARTER")) {
-                            isStarter = true;
-                            break; // STARTER tiene prioridad
-                        } else if (role.equalsIgnoreCase("SUB")) {
-                            isSub = true; // si no encontramos STARTER, SUB vale 1 punto
-                        }
-                    }
+                    if (role != null && role.equalsIgnoreCase("STARTER")) { isStarter = true; break; }
+                    if (role != null && role.equalsIgnoreCase("SUB")) { isSub = true; }
                 }
             }
         }
         if (isStarter) {
             pts += 2;
-        } else if (isSub) {
+        } else if (isSub && hasAnyPersonalEvent(playerId, events)) {
             pts += 1;
         }
 
-        // 3) Tarjetas: amarilla -1, roja -3 (cap: si hay expulsión, no acumular -1 adicional)
-        int yellow = 0;
-        boolean hasRedExpulsion = false; // RED_CARD o SECOND_YELLOW_CARD
-        if (events != null) {
-            for (MatchEventEntity e : events) {
-                if (e != null && e.getPlayerId() == playerId) {
-                    String type = e.getType();
-                    if (type == null) continue;
-                    String t = type.toUpperCase();
-                    if (t.equals("YELLOW") || t.equals("YELLOW_CARD")) {
-                        yellow++;
-                    } else if (t.equals("RED") || t.equals("RED_CARD") || t.equals("SECOND_YELLOW_CARD")) {
-                        hasRedExpulsion = true;
-                    }
-                }
-            }
-        }
-        if (hasRedExpulsion) {
-            pts += -3; // tope por expulsión
-        } else if (yellow > 0) {
-            pts += (-1 * yellow);
+        // 3) Tarjetas: YELLOW -1 por cada; SECOND_YELLOW -3 adicional (neto -4 con al menos una amarilla);
+        //    RED directa -4 y NO acumula amarillas
+        if (hasDirectRed) {
+            pts += -4;
+        } else {
+            if (yellows > 0) pts += (-1 * yellows);
+            if (hasSecondYellow) pts += -3; // adicional
         }
 
         // 4) Resultado del equipo: Victoria +3, Empate +1, Derrota 0 (si hay marcador)
         Integer hs = match.getHomeScore();
         Integer as = match.getAwayScore();
         if (hs != null && as != null) {
-            boolean isHome = (playerTeamId == match.getHomeTeamId());
+            boolean isHome = (matchTeamId == match.getHomeTeamId());
             int my = isHome ? hs : as;
             int opp = isHome ? as : hs;
-            if (my > opp) pts += 3; else if (my == opp) pts += 1; // derrota suma 0
+            if (my > opp) pts += 3; else if (my == opp) pts += 1; // derrota 0
         }
 
         return pts;

@@ -44,6 +44,9 @@ public class LeagueDetailActivity extends AppCompatActivity {
         String market = getIntent().getStringExtra("EXTRA_MARKET_HOUR");
         String teamType = getIntent().getStringExtra("EXTRA_TEAM_TYPE");
         int participants = getIntent().getIntExtra("EXTRA_PARTICIPANTS", 0);
+        // Leer leagueId real si viene en el intent
+        long lidExtra = getIntent().getLongExtra("EXTRA_LEAGUE_ID", 1L);
+        this.leagueId = lidExtra;
 
         // Pinto textos básicos.
         if (getSupportActionBar() != null) getSupportActionBar().setTitle(leagueName);
@@ -64,8 +67,8 @@ public class LeagueDetailActivity extends AppCompatActivity {
         btnMyTeam.setOnClickListener(v -> {
             Intent i = new Intent(this, MyTeamActivity.class);
             i.putExtra("EXTRA_LEAGUE_NAME", leagueName);
-            // TODO: Reemplazar 1L con el id real de la liga cuando esté disponible
-            i.putExtra(MyTeamActivity.EXTRA_LEAGUE_ID, 1L);
+            // Pasar el id real de liga leido del Intent
+            i.putExtra(MyTeamActivity.EXTRA_LEAGUE_ID, leagueId);
             startActivity(i);
         });
 

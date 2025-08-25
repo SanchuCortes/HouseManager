@@ -42,11 +42,12 @@ public class TransferMarketAdapter extends RecyclerView.Adapter<TransferMarketAd
 
     @Override public void onBindViewHolder(@NonNull VH h, int pos) {
         Player p = players.get(pos);
-        // Mostrar nombre + puntos
-        h.tvName.setText(String.format("%s · %d pts", p.getName(), p.getTotalPoints()));
+        // Mostrar nombre solo y los puntos a la derecha
+        h.tvName.setText(p.getName());
         h.tvTeam.setText(p.getTeamName());
         h.tvPrice.setText(String.format("€ %.1f M", p.getCurrentPrice()));
         h.tvPos.setText(p.getPosition());
+        h.tvPoints.setText(String.format("%d pts", p.getTotalPoints()));
 
         h.itemView.setOnClickListener(v -> listener.onPlayerClick(p));
         h.btnBuy.setOnClickListener(v -> listener.onBuyPlayerClick(p));
@@ -55,7 +56,7 @@ public class TransferMarketAdapter extends RecyclerView.Adapter<TransferMarketAd
     @Override public int getItemCount() { return players.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
-        TextView tvName, tvTeam, tvPrice, tvPos;
+        TextView tvName, tvTeam, tvPrice, tvPos, tvPoints;
         Button btnBuy;
         VH(@NonNull View v) {
             super(v);
@@ -63,6 +64,7 @@ public class TransferMarketAdapter extends RecyclerView.Adapter<TransferMarketAd
             tvTeam = v.findViewById(R.id.tv_team);
             tvPrice = v.findViewById(R.id.tv_price);
             tvPos = v.findViewById(R.id.tv_pos);
+            tvPoints = v.findViewById(R.id.tv_points);
             btnBuy = v.findViewById(R.id.btn_buy);
         }
     }

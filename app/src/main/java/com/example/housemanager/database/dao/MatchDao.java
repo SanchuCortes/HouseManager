@@ -38,6 +38,10 @@ public interface MatchDao {
     @Query("SELECT * FROM matches WHERE utcDateMillis > 0 ORDER BY utcDateMillis ASC LIMIT 10")
     LiveData<List<MatchEntity>> getUpcoming10();
 
+    /** Últimos partidos finalizados, orden descendente por fecha. */
+    @Query("SELECT * FROM matches WHERE status = 'FINISHED' AND utcDateMillis > 0 ORDER BY utcDateMillis DESC LIMIT :limit")
+    LiveData<List<MatchEntity>> getLastFinished(int limit);
+
     /** Devuelve todos los partidos de forma síncrona (para cálculo de puntos). */
     @Query("SELECT * FROM matches")
     List<MatchEntity> getAllSync();

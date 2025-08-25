@@ -41,6 +41,9 @@ public class MyTeamActivity extends AppCompatActivity {
     private String leagueName = "Mi Liga Fantasy";
     private int currentCaptainId = -1;
     private final List<PlayerAPI> currentSquad = new ArrayList<>();
+    // Estadísticas calculadas
+    private int latestSquadValue = 0;      // en millones
+    private int latestLeagueBudget = 0;    // en millones
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -113,8 +116,8 @@ public class MyTeamActivity extends AppCompatActivity {
         // Botón Transferencias
         btnTransfers.setOnClickListener(v -> {
             Intent intent = new Intent(this, TransferMarketActivity.class);
-            // TODO: Reemplazar 1L con el id real de la liga actual del usuario
-            intent.putExtra("EXTRA_LEAGUE_ID", 1L);
+            // Usar el id de liga actual de esta pantalla
+            intent.putExtra("EXTRA_LEAGUE_ID", leagueId);
             startActivity(intent);
         });
 
@@ -141,6 +144,7 @@ public class MyTeamActivity extends AppCompatActivity {
                 adapter.setCaptainId(currentCaptainId);
 
                 recalculatePoints();
+                // update stats will be driven also by value/budget observers below
                 updateTeamStats();
             } else {
                 android.util.Log.d("MyTeamActivity", "Aún no tienes jugadores. Ve al mercado de fichajes.");
@@ -148,6 +152,17 @@ public class MyTeamActivity extends AppCompatActivity {
                 recalculatePoints();
                 updateTeamStats();
             }
+        });
+
+        // Observa valor de plantilla y presupuesto de liga para mostrar estadísticas
+        com.example.housemanager.repository.FootballRepository repo = com.example.housemanager.repository.FootballRepository.getInstance(this);
+        repo.getMySquadValueLive(leagueId, 1L).observe(this, value -> {
+            latestSquadValue = (value != null ? value : 0);
+            updateTeamStats();
+        });
+        repo.getLeagueBudgetLive(leagueId).observe(this, budget -> {
+            latestLeagueBudget = (budget != null ? budget : 0);
+            updateTeamStats();
         });
     }
 
@@ -190,12 +205,12 @@ public class MyTeamActivity extends AppCompatActivity {
     }
 
     private void updateTeamStats() {
-        // No inventamos métricas: si no hay fuente real, mostramos estado vacío
         if (tvTeamValue != null) {
-            tvTeamValue.setText("—");
+            tvTeamValue.setText(latestSquadValue + "M €");
         }
         if (tvRemainingBudget != null) {
-            tvRemainingBudget.setText("—");
+            int remaining = Math.max(latestLeagueBudget - latestSquadValue, 0);
+            tvRemainingBudget.setText(remaining + "M €");
         }
     }
 

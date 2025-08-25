@@ -119,6 +119,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         try {
             setSupportActionBar(toolbar);
+            if (getSupportActionBar() != null) {
+                // Quitar el título de texto de la app en la esquina izquierda
+                getSupportActionBar().setDisplayShowTitleEnabled(false);
+            }
         } catch (Exception e) {
             Log.w(TAG, "Error al configurar la toolbar", e);
         }
@@ -261,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             llMatchesContainer.setOnLongClickListener(v -> {
                 repository.getCurrentMatchday(new FootballRepository.MatchdayCallback() {
                     @Override public void onResult(int matchday) {
-                        repository.recomputePointsForAllFinishedMatches(new FootballRepository.SyncCallback() {
+                        repository.recalcAllFinishedPoints(new FootballRepository.SyncCallback() {
                             @Override public void onSuccess() {
                                 com.google.android.material.snackbar.Snackbar.make(findViewById(android.R.id.content), "Puntos recalculados para partidos FINISHED", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
                             }
@@ -287,8 +291,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     Log.d(TAG, "Sincronización completada exitosamente");
                     showSyncCompletedMessage();
                 });
-                // Tras sincronizar equipos/jugadores, sincronizar jornada y recalcular puntos en background
-                repository.syncAndRecalculatePointsForCurrentMatchday(null);
+                // Tras sincronizar equipos/jugadores, sincronizar TODAS las jornadas hasta la actual y recalcular puntos
+                repository.syncAndRecalculatePointsForAllMatchdaysUpToCurrent(null);
             }
 
             @Override
@@ -496,49 +500,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-        // Alineación incompleta: usuario 1, jornada 1 (hasta que haya gestión de usuarios/jornadas)
-        repository.isLineupIncomplete(1, 1).observe(this, incomplete -> {
-            if (tvIncompleteLineups != null && incomplete != null) {
-                tvIncompleteLineups.setText(incomplete ? "1" : "0");
+        // Alineación incompleta por liga: mostrar cuántas ligas del usuario no pueden formar 11 válido
+        repository.getIncompleteLineupsLeaguesCount(1L).observe(this, count -> {
+            if (tvIncompleteLineups != null && count != null) {
+                tvIncompleteLineups.setText(String.valueOf(count));
             }
         });
     }
 
     /** Configura/observa la sección de Próximos Partidos en el último card */
     private void setupUpcomingMatchesSection() {
-        // 1) Intentar por jornada actual
-        repository.getCurrentMatchday(new FootballRepository.MatchdayCallback() {
-            @Override
-            public void onResult(int matchday) {
-                // Usar el flujo completo que descarga detalles (alineaciones y eventos) y recalcula puntos
-                repository.syncAndRecalculatePointsForCurrentMatchday(new FootballRepository.SyncCallback() {
-                    @Override public void onSuccess() {
-                        observeAndRenderMatchdayList();
-                    }
-                    @Override public void onError(Throwable t) { fallbackUpcomingRange(); }
-                    @Override public void onProgress(String message, int current, int total) { }
-                });
-            }
-            @Override
-            public void onError(Throwable t) { fallbackUpcomingRange(); }
-        });
-
-        // Observación adicional: si hay datos de cualquier modo (matchday o próximos), pintarlos
-        repository.getUpcoming10MatchesLive().observe(this, matches -> {
-            if (matches != null && !matches.isEmpty()) {
-                renderMatchesList(matches);
-            }
-        });
-    }
-
-    private void observeAndRenderMatchdayList() {
-        repository.getMatchdayMatchesLive().observe(this, matches -> renderMatchesList(matches));
-    }
-
-    private void fallbackUpcomingRange() {
-        // 2) Fallback: próximos 10 por fecha
-        repository.syncUpcomingMatches(null); // aseguramos datos en Room si no existían
-        repository.getUpcomingMatches(10).observe(this, matches -> renderMatchesList(matches));
+        // Usar un ViewModel especializado para componer la lista con fallback sin observeForever
+        com.example.housemanager.viewmodel.HomeViewModel homeVm = new androidx.lifecycle.ViewModelProvider(this).get(com.example.housemanager.viewmodel.HomeViewModel.class);
+        homeVm.getHomeMatches().observe(this, this::renderMatchesList);
+        // Lanzar un refresh no bloqueante para asegurar datos locales
+        homeVm.refresh();
     }
 
     private void renderMatchesList(java.util.List<com.example.housemanager.database.entities.MatchEntity> matches) {

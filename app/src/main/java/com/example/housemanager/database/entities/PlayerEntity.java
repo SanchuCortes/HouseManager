@@ -7,6 +7,8 @@ import androidx.room.PrimaryKey;
 
 @Entity(tableName = "players")
 public class PlayerEntity {
+    // Nota: la propiedad de jugador no se determina por campos globales como 'available' o 'isOwned'.
+    // En producción, la propiedad es por liga y se almacena en LeaguePlayerOwnership.
 
     @PrimaryKey
     @ColumnInfo(name = "playerId")
